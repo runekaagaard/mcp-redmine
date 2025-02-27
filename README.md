@@ -155,6 +155,10 @@ Contributions are warmly welcomed! Whether it's bug reports, feature requests, d
 
 The goal is to make Redmine project management with Claude even better, and your insights and contributions help achieve that.
 
+## Todo
+
+- File and attachment uploads
+
 ## Acknowledgments
 
 This project builds on the excellent work of others:
