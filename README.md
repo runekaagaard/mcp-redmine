@@ -17,7 +17,7 @@ Uses httpx for API requests and integrates with the Redmine OpenAPI specificatio
 ## Requirements
 
 - Access to a Redmine instance (5.0+, tested on 6.0.3)
-- API key with appropriate permissions
+- Redmine API key
 - Python 3.10+
 
 ## API
@@ -42,8 +42,9 @@ Uses httpx for API requests and integrates with the Redmine OpenAPI specificatio
   ```yaml
   /issues.json:
     get:
-      externalDocs:
-        url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues
+      operationId: getIssues
+      parameters:
+        - $ref: '#/components/parameters/format'
       ...
   ```
 
@@ -77,8 +78,7 @@ Add to your `claude_desktop_config.json`:
       "args": ["--directory", "/path/to/mcp-redmine", "run", "server.py"],
       "env": {
         "REDMINE_URL": "https://your-redmine-instance.example.com",
-        "REDMINE_API_KEY": "your-api-key",
-        "LOG_FILE_PATH": "/path/to/log/file.log"
+        "REDMINE_API_KEY": "your-api-key"
       }
     }
   }
@@ -89,7 +89,6 @@ Environment Variables:
 
 - `REDMINE_URL`: URL of your Redmine instance (required)
 - `REDMINE_API_KEY`: Your Redmine API key (required, see below for how to get it)
-- `LOG_FILE_PATH`: Path for logging file (optional)
 
 ## Getting Your Redmine API Key
 
@@ -161,7 +160,7 @@ The goal is to make Redmine project management with Claude even better, and your
 This project builds on the excellent work of others:
 
 - [httpx](https://www.python-httpx.org/) - For handling HTTP requests
-- [Redmine OpenAPI Specification](https://github.com/d-yoshi/redmine-openapi) - For the comprehensive API specification (based on Redmine 5.0)
+- [Redmine OpenAPI Specification](https://github.com/d-yoshi/redmine-openapi) - For the comprehensive API specification (based on Redmine 5.0, but likely compatible with older versions)
 - [Redmine](https://www.redmine.org/) - The flexible project management web application
 
 ## License
