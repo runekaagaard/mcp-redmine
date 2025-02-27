@@ -1,0 +1,4966 @@
+openapi: 3.0.3
+info:
+  title: Redmine API
+  description: Unofficial OpenAPI specification for the Redmine API.
+  contact:
+    name: d-yoshi/redmine-openapi
+    url: https://github.com/d-yoshi/redmine-openapi
+  license:
+    name: MIT
+    url: https://github.com/d-yoshi/redmine-openapi/blob/main/LICENSE
+  version: 0.16.0
+servers:
+  - url: /
+security:
+  - BasicAuth: []
+  - ApiKeyAuth: []
+  - ApiKeyInQueryAuth: []
+tags:
+  - name: Issues
+    description: 'Status: Stable, Availablity: 1.0'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues
+  - name: Projects
+    description: 'Status: Stable, Availablity: 1.0'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_Projects
+  - name: Project Memberships
+    description: 'Status: Alpha, Availablity: 1.4'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_Memberships
+  - name: Users
+    description: 'Status: Stable, Availablity: 1.1'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_Users
+  - name: Time Entries
+    description: 'Status: Stable, Availablity: 1.1'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_TimeEntries
+  - name: News
+    description: 'Status: Prototype, Availablity: 1.1'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_News
+  - name: Issue Relations
+    description: 'Status: Alpha, Availablity: 1.3'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueRelations
+  - name: Versions
+    description: 'Status: Alpha, Availablity: 1.3'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_Versions
+  - name: Wiki Pages
+    description: 'Status: Alpha, Availablity: 2.2'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_WikiPages
+  - name: Queries
+    description: 'Status: Alpha, Availablity: 1.3'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_Queries
+  - name: Attachments
+    description: 'Status: Beta, Availablity: 1.3'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_Attachments
+  - name: Issue Statuses
+    description: 'Status: Alpha, Availablity: 1.3'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueStatuses
+  - name: Trackers
+    description: 'Status: Alpha, Availablity: 1.3'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_Trackers
+  - name: Enumerations
+    description: 'Status: Alpha, Availablity: 2.2'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_Enumerations
+  - name: Issue Categories
+    description: 'Status: Alpha, Availablity: 1.3'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueCategories
+  - name: Roles
+    description: 'Status: Alpha, Availablity: 1.4'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_Roles
+  - name: Groups
+    description: 'Status: Alpha, Availablity: 2.1'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_Groups
+  - name: Custom Fields
+    description: 'Status: Alpha, Availablity: 2.4'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_CustomFields
+  - name: Search
+    description: 'Status: Alpha, Availablity: 3.3'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_Search
+  - name: Files
+    description: 'Status: Alpha, Availablity: 3.4'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_Files
+  - name: My Account
+    description: 'Status: Alpha, Availablity: 4.1'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_MyAccount
+  - name: Journals
+    description: 'Status: Alpha, Availablity: 5.0'
+    externalDocs:
+      url: https://www.redmine.org/projects/redmine/wiki/Rest_Journals?parent=Rest_api
+  - name: Repositories
+    description: Undocumented
+externalDocs:
+  description: Redmine API Official Developer Guide
+  url: https://www.redmine.org/projects/redmine/wiki/Rest_api
+paths:
+  /issues.json:
+    get:
+      tags:
+        - Issues
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues#Listing-issues
+      summary: List issues
+      operationId: getIssues
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/nometa'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - $ref: '#/components/parameters/x_redmine_nometa'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            example: id:desc
+        - name: include
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - attachments
+                - relations
+          explode: false
+        - name: issue_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: project_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: subproject_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: tracker_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: status_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: assigned_to_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: parent_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: cf_x
+          in: query
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+            example:
+              cf_0: string
+        - name: author_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: member_of_group
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: assigned_to_role
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: fixed_version_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: fixed_version.due_date
+          in: query
+          schema:
+            type: string
+        - name: fixed_version.status
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: category_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: subject
+          in: query
+          schema:
+            type: string
+        - name: description
+          in: query
+          schema:
+            type: string
+        - name: notes
+          in: query
+          schema:
+            type: string
+        - name: created_on
+          in: query
+          schema:
+            type: string
+        - name: updated_on
+          in: query
+          schema:
+            type: string
+        - name: closed_on
+          in: query
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          schema:
+            type: string
+        - name: due_date
+          in: query
+          schema:
+            type: string
+        - name: estimated_hours
+          in: query
+          schema:
+            type: string
+        - name: spent_time
+          in: query
+          schema:
+            type: string
+        - name: done_ratio
+          in: query
+          schema:
+            type: string
+        - name: is_private
+          in: query
+          schema:
+            type: string
+        - name: attachment
+          in: query
+          schema:
+            type: string
+        - name: attachment_description
+          in: query
+          schema:
+            type: string
+        - name: watcher_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: updated_by
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: last_updated_by
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: project.status
+          in: query
+          schema:
+            type: integer
+        - name: relation_type
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: child_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: query_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - issues
+                properties:
+                  issues:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/issue.simple'
+                  total_count:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+    post:
+      tags:
+        - Issues
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues#Creating-an-issue
+      summary: Create issue
+      operationId: createIssue
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - issue
+              properties:
+                issue:
+                  type: object
+                  required:
+                    - project_id
+                    - subject
+                  properties:
+                    project_id:
+                      type: integer
+                    tracker_id:
+                      type: integer
+                    status_id:
+                      type: integer
+                    priority_id:
+                      type: integer
+                    subject:
+                      type: string
+                    description:
+                      type: string
+                      nullable: true
+                    start_date:
+                      type: string
+                      format: date
+                      nullable: true
+                    due_date:
+                      type: string
+                      format: date
+                      nullable: true
+                    done_ratio:
+                      type: integer
+                      minimum: 0
+                      maximum: 100
+                      multipleOf: 10
+                    category_id:
+                      type: integer
+                      nullable: true
+                    fixed_version_id:
+                      type: integer
+                      nullable: true
+                    assigned_to_id:
+                      type: integer
+                      nullable: true
+                    parent_issue_id:
+                      type: integer
+                      nullable: true
+                    custom_fields:
+                      $ref: '#/components/schemas/custom_fields'
+                    custom_field_values:
+                      $ref: '#/components/schemas/custom_field_values'
+                    watcher_user_ids:
+                      type: array
+                      items:
+                        type: integer
+                    is_private:
+                      type: boolean
+                    estimated_hours:
+                      type: number
+                      nullable: true
+                    uploads:
+                      $ref: '#/components/schemas/uploads'
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - issue
+                properties:
+                  issue:
+                    $ref: '#/components/schemas/issue.simple'
+  /issues/{issue_id}.json:
+    get:
+      tags:
+        - Issues
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues#Showing-an-issue
+      summary: Show issue
+      operationId: getIssue
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/issue_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - name: include
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - children
+                - attachments
+                - relations
+                - changesets
+                - journals
+                - watchers
+                - allowed_statuses
+          explode: false
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - issue
+                properties:
+                  issue:
+                    $ref: '#/components/schemas/issue'
+    put:
+      tags:
+        - Issues
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues#Updating-an-issue
+      summary: Update issue
+      operationId: updateIssue
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/issue_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                issue:
+                  type: object
+                  properties:
+                    project_id:
+                      type: integer
+                    tracker_id:
+                      type: integer
+                    status_id:
+                      type: integer
+                    priority_id:
+                      type: integer
+                    subject:
+                      type: string
+                    description:
+                      type: string
+                      nullable: true
+                    start_date:
+                      type: string
+                      format: date
+                      nullable: true
+                    due_date:
+                      type: string
+                      format: date
+                      nullable: true
+                    done_ratio:
+                      type: integer
+                      minimum: 0
+                      maximum: 100
+                      multipleOf: 10
+                    category_id:
+                      type: integer
+                      nullable: true
+                    fixed_version_id:
+                      type: integer
+                      nullable: true
+                    assigned_to_id:
+                      type: integer
+                      nullable: true
+                    parent_issue_id:
+                      type: integer
+                      nullable: true
+                    custom_fields:
+                      $ref: '#/components/schemas/custom_fields'
+                    custom_field_values:
+                      $ref: '#/components/schemas/custom_field_values'
+                    watcher_user_ids:
+                      type: array
+                      items:
+                        type: integer
+                    is_private:
+                      type: boolean
+                    estimated_hours:
+                      type: number
+                      nullable: true
+                    notes:
+                      type: string
+                    private_notes:
+                      type: string
+                    uploads:
+                      $ref: '#/components/schemas/uploads'
+      responses:
+        '204':
+          description: ''
+    delete:
+      tags:
+        - Issues
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues#Deleting-an-issue
+      summary: Delete issue
+      operationId: deleteIssue
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/issue_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+  /issues/{issue_id}/watchers.json:
+    post:
+      tags:
+        - Issues
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues#Adding-a-watcher
+      summary: Add watcher
+      operationId: addWatcher
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/issue_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+              properties:
+                user_id:
+                  type: integer
+      responses:
+        '204':
+          description: ''
+  /issues/{issue_id}/watchers/{user_id}.json:
+    delete:
+      tags:
+        - Issues
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Issues#Removing-a-watcher
+      summary: Remove watcher
+      operationId: removeWatcher
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/issue_id'
+        - $ref: '#/components/parameters/user_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+  /projects.json:
+    get:
+      tags:
+        - Projects
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Projects#Listing-projects
+      summary: List projects
+      operationId: getProjects
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/nometa'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - $ref: '#/components/parameters/x_redmine_nometa'
+        - name: include
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - trackers
+                - issue_categories
+                - time_entry_activities
+                - enabled_modules
+                - issue_custom_fields
+          explode: false
+        - name: status
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+          explode: false
+        - name: id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: name
+          in: query
+          schema:
+            type: string
+        - name: description
+          in: query
+          schema:
+            type: string
+        - name: parent_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: is_public
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - '0'
+                - '1'
+          explode: false
+        - name: created_on
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - projects
+                properties:
+                  projects:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/project.simple'
+                  total_count:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+    post:
+      tags:
+        - Projects
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Projects#Creating-a-project
+      summary: Crete project
+      operationId: createProject
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - project
+              properties:
+                project:
+                  type: object
+                  required:
+                    - name
+                    - identifier
+                  properties:
+                    name:
+                      type: string
+                    identifier:
+                      type: string
+                    description:
+                      type: string
+                      nullable: true
+                    homepage:
+                      type: string
+                      nullable: true
+                    is_public:
+                      type: boolean
+                    parent_id:
+                      type: integer
+                      nullable: true
+                    inherit_members:
+                      type: boolean
+                    default_assigned_to_id:
+                      type: integer
+                      nullable: true
+                    default_version_id:
+                      type: integer
+                      nullable: true
+                    tracker_ids:
+                      type: array
+                      items:
+                        type: integer
+                    enabled_module_names:
+                      type: array
+                      items:
+                        type: string
+                    issue_custom_field_ids:
+                      type: array
+                      items:
+                        type: integer
+                    custom_fields:
+                      $ref: '#/components/schemas/custom_fields'
+                    custom_field_values:
+                      $ref: '#/components/schemas/custom_field_values'
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - project
+                properties:
+                  project:
+                    $ref: '#/components/schemas/project'
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+  /projects/{project_id}.json:
+    get:
+      tags:
+        - Projects
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Projects#Showing-a-project
+      summary: Show project
+      operationId: getProject
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - name: include
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - trackers
+                - issue_categories
+                - time_entry_activities
+                - enabled_modules
+                - issue_custom_fields
+          explode: false
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - project
+                properties:
+                  project:
+                    $ref: '#/components/schemas/project'
+    put:
+      tags:
+        - Projects
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Projects#Updating-a-project
+      summary: Update project
+      operationId: updateProject
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    description:
+                      type: string
+                      nullable: true
+                    homepage:
+                      type: string
+                      nullable: true
+                    is_public:
+                      type: boolean
+                    parent_id:
+                      type: integer
+                      nullable: true
+                    inherit_members:
+                      type: boolean
+                    default_assigned_to_id:
+                      type: integer
+                      nullable: true
+                    default_version_id:
+                      type: integer
+                      nullable: true
+                    tracker_ids:
+                      type: array
+                      items:
+                        type: integer
+                    enabled_module_names:
+                      type: array
+                      items:
+                        type: string
+                    issue_custom_field_ids:
+                      type: array
+                      items:
+                        type: integer
+                    custom_fields:
+                      $ref: '#/components/schemas/custom_fields'
+                    custom_field_values:
+                      $ref: '#/components/schemas/custom_field_values'
+      responses:
+        '204':
+          description: ''
+    delete:
+      tags:
+        - Projects
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Projects#Deleting-a-project
+      summary: Delete project
+      operationId: deleteProject
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/archive.json:
+    put:
+      tags:
+        - Projects
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Projects#Archiving-a-project
+      summary: Archive project
+      operationId: archiveProject
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/unarchive.json:
+    put:
+      tags:
+        - Projects
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Projects#Unarchiving-a-project
+      summary: Unarchive project
+      operationId: unarchiveProject
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/memberships.json:
+    get:
+      tags:
+        - Project Memberships
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Memberships#GET
+      summary: List memberships
+      operationId: getMemberships
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/nometa'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - $ref: '#/components/parameters/x_redmine_nometa'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - memberships
+                properties:
+                  memberships:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/membership'
+                  total_count:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+    post:
+      tags:
+        - Project Memberships
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Memberships#POST
+      summary: Create membership
+      operationId: createMembership
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - membership
+              properties:
+                membership:
+                  type: object
+                  required:
+                    - user_id
+                    - role_ids
+                  properties:
+                    user_id:
+                      type: integer
+                    role_ids:
+                      type: array
+                      items:
+                        type: integer
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - membership
+                properties:
+                  membership:
+                    $ref: '#/components/schemas/membership'
+  /memberships/{membership_id}.json:
+    get:
+      tags:
+        - Project Memberships
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Memberships#GET-2
+      summary: Show membership
+      operationId: getMembership
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/membership_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - membership
+                properties:
+                  membership:
+                    $ref: '#/components/schemas/membership'
+    put:
+      tags:
+        - Project Memberships
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Memberships#PUT
+      summary: Update membership
+      operationId: updateMembership
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/membership_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                membership:
+                  type: object
+                  required:
+                    - role_ids
+                  properties:
+                    role_ids:
+                      type: array
+                      items:
+                        type: integer
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+    delete:
+      tags:
+        - Project Memberships
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Memberships#DELETE
+      summary: Delete membership
+      operationId: deleteMembership
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/membership_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/close.json:
+    put:
+      tags:
+        - Projects
+      summary: Close project
+      operationId: closeProject
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/reopen.json:
+    put:
+      tags:
+        - Projects
+      summary: Reopen project
+      operationId: reopenProject
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+  /users.json:
+    get:
+      tags:
+        - Users
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Users#GET
+      summary: List users
+      operationId: getUsers
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/nometa'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - $ref: '#/components/parameters/x_redmine_nometa'
+        - name: status
+          in: query
+          schema:
+            type: integer
+        - name: name
+          in: query
+          schema:
+            type: string
+        - name: group_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - users
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/user.simple'
+                  total_count:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+    post:
+      tags:
+        - Users
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Users#POST
+      summary: Create user
+      operationId: createUser
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user
+              properties:
+                user:
+                  type: object
+                  required:
+                    - login
+                    - firstname
+                    - lastname
+                    - mail
+                  properties:
+                    login:
+                      type: string
+                    admin:
+                      type: boolean
+                    password:
+                      type: string
+                    firstname:
+                      type: string
+                    lastname:
+                      type: string
+                    mail:
+                      type: string
+                    language:
+                      type: string
+                    auth_source_id:
+                      type: integer
+                      nullable: true
+                    mail_notification:
+                      type: string
+                      enum:
+                        - all
+                        - selected
+                        - only_my_events
+                        - only_assigned
+                        - only_owner
+                        - none
+                    notified_project_ids:
+                      type: array
+                      items:
+                        type: integer
+                    must_change_passwd:
+                      type: boolean
+                    generate_password:
+                      type: boolean
+                    status:
+                      type: integer
+                    custom_fields:
+                      $ref: '#/components/schemas/custom_fields'
+                    custom_field_values:
+                      $ref: '#/components/schemas/custom_field_values'
+                send_information:
+                  type: boolean
+                pref:
+                  $ref: '#/components/schemas/pref'
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/user'
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+  /users/{user_id}.json:
+    get:
+      tags:
+        - Users
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Users#GET-2
+      summary: Show user
+      operationId: getUser
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/user_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - name: include
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - memberships
+                - groups
+          explode: false
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - user
+                properties:
+                  user:
+                    $ref: '#/components/schemas/user'
+    put:
+      tags:
+        - Users
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Users#PUT
+      summary: Update user
+      operationId: updateUser
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/user_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: object
+                  properties:
+                    login:
+                      type: string
+                    admin:
+                      type: boolean
+                    password:
+                      type: string
+                    firstname:
+                      type: string
+                    lastname:
+                      type: string
+                    mail:
+                      type: string
+                    language:
+                      type: string
+                    auth_source_id:
+                      type: integer
+                      nullable: true
+                    mail_notification:
+                      type: string
+                      enum:
+                        - all
+                        - selected
+                        - only_my_events
+                        - only_assigned
+                        - only_owner
+                        - none
+                    notified_project_ids:
+                      type: array
+                      items:
+                        type: integer
+                    must_change_passwd:
+                      type: boolean
+                    generate_password:
+                      type: boolean
+                    status:
+                      type: integer
+                    custom_fields:
+                      $ref: '#/components/schemas/custom_fields'
+                    custom_field_values:
+                      $ref: '#/components/schemas/custom_field_values'
+                    group_ids:
+                      type: array
+                      items:
+                        type: integer
+                send_information:
+                  type: boolean
+                pref:
+                  $ref: '#/components/schemas/pref'
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+    delete:
+      tags:
+        - Users
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Users#DELETE
+      summary: Delete user
+      operationId: deleteUser
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/user_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+  /users/current.json:
+    get:
+      tags:
+        - Users
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Users#GET-2
+      summary: Show current user
+      operationId: getCurrentUser
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - name: include
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - memberships
+                - groups
+          explode: false
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - user
+                properties:
+                  user:
+                    $ref: '#/components/schemas/user'
+  /time_entries.json:
+    get:
+      tags:
+        - Time Entries
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_TimeEntries#Listing-time-entries
+      summary: List time entries
+      operationId: getTimeEntries
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/nometa'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - $ref: '#/components/parameters/x_redmine_nometa'
+        - name: user_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: project_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: spent_on
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: subproject_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: issue_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: issue.tracker_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: issue.status_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: issue.fixed_version_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: issue.category_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: author_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: activity_id
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: project.status
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: false
+        - name: comments
+          in: query
+          schema:
+            type: string
+        - name: hours
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            example: spent_on:desc
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - time_entries
+                properties:
+                  time_entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/time_entry'
+                  total_count:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+    post:
+      tags:
+        - Time Entries
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_TimeEntries#Creating-a-time-entry
+      summary: Create time entry
+      operationId: createTimeEntry
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - time_entry
+              properties:
+                time_entry:
+                  type: object
+                  required:
+                    - hours
+                  properties:
+                    issue_id:
+                      type: integer
+                    project_id:
+                      type: integer
+                    spent_on:
+                      type: string
+                      format: date
+                    hours:
+                      type: number
+                    activity_id:
+                      type: integer
+                    comments:
+                      type: string
+                    user_id:
+                      type: integer
+                    custom_fields:
+                      $ref: '#/components/schemas/custom_fields'
+                    custom_field_values:
+                      $ref: '#/components/schemas/custom_field_values'
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - time_entry
+                properties:
+                  time_entry:
+                    $ref: '#/components/schemas/time_entry'
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+  /time_entries/{time_entry_id}.json:
+    get:
+      tags:
+        - Time Entries
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_TimeEntries#Showing-a-time-entry
+      summary: Show time entry
+      operationId: getTimeEntry
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/time_entry_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - time_entry
+                properties:
+                  time_entry:
+                    $ref: '#/components/schemas/time_entry'
+    put:
+      tags:
+        - Time Entries
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_TimeEntries#Updating-a-time-entry
+      summary: Update time entry
+      operationId: updateTimeEntry
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/time_entry_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                time_entry:
+                  type: object
+                  required:
+                    - hours
+                  properties:
+                    issue_id:
+                      type: integer
+                    project_id:
+                      type: integer
+                    spent_on:
+                      type: string
+                      format: date
+                    hours:
+                      type: number
+                    activity_id:
+                      type: integer
+                    comments:
+                      type: string
+                    user_id:
+                      type: integer
+                    custom_fields:
+                      $ref: '#/components/schemas/custom_fields'
+                    custom_field_values:
+                      $ref: '#/components/schemas/custom_field_values'
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+    delete:
+      tags:
+        - Time Entries
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_TimeEntries#Deleting-a-time-entry
+      summary: Delete time entry
+      operationId: deleteTimeEntry
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/time_entry_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+  /news.json:
+    get:
+      tags:
+        - News
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_News#GET
+      summary: List news
+      operationId: getNewsList
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/nometa'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - $ref: '#/components/parameters/x_redmine_nometa'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - news
+                properties:
+                  news:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/news'
+                  total_count:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+  /news/{news_id}.json:
+    get:
+      tags:
+        - News
+      summary: Show news
+      operationId: getNews
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/news_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - name: include
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - attachments
+                - comments
+          explode: false
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - news
+                properties:
+                  news:
+                    $ref: '#/components/schemas/news'
+    put:
+      tags:
+        - News
+      summary: Update news
+      operationId: updateNews
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/news_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                news:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                    summary:
+                      type: string
+                    description:
+                      type: string
+                    uploads:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          token:
+                            type: string
+                          filename:
+                            type: string
+                          description:
+                            type: string
+                          content_type:
+                            type: string
+      responses:
+        '204':
+          description: ''
+    delete:
+      tags:
+        - News
+      summary: Delete news
+      operationId: deleteNews
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/news_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/news.json:
+    get:
+      tags:
+        - News
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_News#GET-2
+      summary: List news by project
+      operationId: getNewsListByProject
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/nometa'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - $ref: '#/components/parameters/x_redmine_nometa'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - news
+                properties:
+                  news:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/news'
+                  total_count:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+    post:
+      tags:
+        - News
+      summary: Create news
+      operationId: createNews
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - news
+              properties:
+                news:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                    summary:
+                      type: string
+                    description:
+                      type: string
+                    uploads:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          token:
+                            type: string
+                          filename:
+                            type: string
+                          description:
+                            type: string
+                          content_type:
+                            type: string
+      responses:
+        '204':
+          description: ''
+  /issues/{issue_id}/relations.json:
+    get:
+      tags:
+        - Issue Relations
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueRelations#GET
+      summary: List issue relations
+      operationId: getIssueRelations
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/issue_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - relations
+                properties:
+                  relations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/issue_relation'
+    post:
+      tags:
+        - Issue Relations
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueRelations#POST
+      summary: Create issue relation
+      operationId: createIssueRelation
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/issue_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - relation
+              properties:
+                relation:
+                  type: object
+                  required:
+                    - issue_to_id
+                    - relation_type
+                  properties:
+                    issue_to_id:
+                      type: integer
+                    relation_type:
+                      type: string
+                      enum:
+                        - relates
+                        - duplicates
+                        - duplicated
+                        - blocks
+                        - blocked
+                        - precedes
+                        - follows
+                        - copied_to
+                        - copied_from
+                    delay:
+                      type: integer
+                      nullable: true
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - relation
+                properties:
+                  relation:
+                    $ref: '#/components/schemas/issue_relation'
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+  /relations/{issue_relation_id}.json:
+    get:
+      tags:
+        - Issue Relations
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueRelations#GET-2
+      summary: Show issue relation
+      operationId: getIssueRelation
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/issue_relation_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - relation
+                properties:
+                  relation:
+                    $ref: '#/components/schemas/issue_relation'
+    delete:
+      tags:
+        - Issue Relations
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueRelations#DELETE
+      summary: Delete issue relation
+      operationId: deleteIssueRelation
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/issue_relation_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+  /projects/{project_id}/versions.json:
+    get:
+      tags:
+        - Versions
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Versions#GET
+      summary: List versions by project
+      operationId: getVersionsByProject
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/nometa'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - $ref: '#/components/parameters/x_redmine_nometa'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - versions
+                properties:
+                  versions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/version.simple'
+                  total_count:
+                    type: integer
+    post:
+      tags:
+        - Versions
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Versions#POST
+      summary: Create version
+      operationId: createVersion
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - version
+              properties:
+                version:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      type: string
+                    status:
+                      type: string
+                      enum:
+                        - open
+                        - locked
+                        - closed
+                    sharing:
+                      type: string
+                      enum:
+                        - none
+                        - descendants
+                        - hierarchy
+                        - tree
+                        - system
+                    due_date:
+                      type: string
+                      format: date
+                      nullable: true
+                    description:
+                      type: string
+                    wiki_page_title:
+                      type: string
+                      nullable: true
+                    custom_fields:
+                      $ref: '#/components/schemas/custom_fields'
+                    custom_field_values:
+                      $ref: '#/components/schemas/custom_field_values'
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - version
+                properties:
+                  version:
+                    $ref: '#/components/schemas/version'
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+  /versions/{version_id}.json:
+    get:
+      tags:
+        - Versions
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Versions#GET-2
+      summary: Show version
+      operationId: getVersions
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/version_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - version
+                properties:
+                  version:
+                    $ref: '#/components/schemas/version'
+    put:
+      tags:
+        - Versions
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Versions#PUT
+      summary: Update version
+      operationId: updateVersion
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/version_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                version:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    status:
+                      type: string
+                      enum:
+                        - open
+                        - locked
+                        - closed
+                    sharing:
+                      type: string
+                      enum:
+                        - none
+                        - descendants
+                        - hierarchy
+                        - tree
+                        - system
+                    due_date:
+                      type: string
+                      format: date
+                      nullable: true
+                    description:
+                      type: string
+                    wiki_page_title:
+                      type: string
+                      nullable: true
+                    custom_fields:
+                      $ref: '#/components/schemas/custom_fields'
+                    custom_field_values:
+                      $ref: '#/components/schemas/custom_field_values'
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+    delete:
+      tags:
+        - Versions
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Versions#DELETE
+      summary: Delete version
+      operationId: deleteVersion
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/version_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+  /projects/{project_id}/wiki/index.json:
+    get:
+      tags:
+        - Wiki Pages
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Getting-the-pages-list-of-a-wiki
+      summary: List wiki pages
+      operationId: getWikiPages
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - wiki_pages
+                properties:
+                  wiki_pages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/wiki_pages'
+  /projects/{project_id}/wiki/{wiki_page_title}.json:
+    get:
+      tags:
+        - Wiki Pages
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Getting-a-wiki-page
+      summary: Show wiki page
+      operationId: getWikiPage
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/wiki_page_title'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - name: include
+          in: query
+          schema:
+            type: string
+            enum:
+              - attachments
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - wiki_page
+                properties:
+                  wiki_page:
+                    $ref: '#/components/schemas/wiki_page'
+    put:
+      tags:
+        - Wiki Pages
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Creating-or-updating-a-wiki-page
+      summary: Create or update wiki page
+      operationId: updateWikiPage
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/wiki_page_title'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                wiki_page:
+                  type: object
+                  required:
+                    - text
+                  properties:
+                    text:
+                      type: string
+                    comments:
+                      type: string
+                    version:
+                      type: integer
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - wiki_page
+                properties:
+                  wiki_page:
+                    $ref: '#/components/schemas/wiki_page'
+        '204':
+          description: ''
+        '409':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+    delete:
+      tags:
+        - Wiki Pages
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Deleting-a-wiki-page
+      summary: Delete wiki page
+      operationId: deleteWikiPage
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/wiki_page_title'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/wiki/{wiki_page_title}/{version_id}.json:
+    get:
+      tags:
+        - Wiki Pages
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Getting-an-old-version-of-a-wiki-page
+      summary: Show wiki page by specific version
+      operationId: getWikiPageByVersion
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/wiki_page_title'
+        - $ref: '#/components/parameters/version_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - name: include
+          in: query
+          schema:
+            type: string
+            enum:
+              - attachments
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - wiki_page
+                properties:
+                  wiki_page:
+                    $ref: '#/components/schemas/wiki_page'
+  /queries.json:
+    get:
+      tags:
+        - Queries
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Queries#GET
+      summary: List queries
+      operationId: getQueries
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/nometa'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - $ref: '#/components/parameters/x_redmine_nometa'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - queries
+                properties:
+                  queries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/query'
+                  total_count:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+  /attachments/{attachment_id}.json:
+    get:
+      tags:
+        - Attachments
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Attachments#GET
+      summary: Show attachment
+      operationId: getAttachment
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/attachment_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - attachment
+                properties:
+                  attachment:
+                    $ref: '#/components/schemas/attachment'
+    patch:
+      tags:
+        - Attachments
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Attachments#PATCH
+      summary: Update attachment
+      operationId: updateAttachment
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/attachment_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                attachment:
+                  type: object
+                  properties:
+                    filename:
+                      type: string
+                    description:
+                      type: string
+      responses:
+        '204':
+          description: ''
+    delete:
+      tags:
+        - Attachments
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Attachments#DELETE
+      summary: Delete attachment
+      operationId: deleteAttachment
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/attachment_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+  /attachments/download/{attachment_id}/{filename}:
+    get:
+      tags:
+        - Attachments
+      summary: Download attachment file
+      operationId: downloadAttachmentFile
+      parameters:
+        - $ref: '#/components/parameters/attachment_id'
+        - $ref: '#/components/parameters/filename'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+  /attachments/thumbnail/{attachment_id}:
+    get:
+      tags:
+        - Attachments
+      summary: Download thumbnail
+      operationId: downloadThumbnail
+      parameters:
+        - $ref: '#/components/parameters/attachment_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+  /issue_statuses.json:
+    get:
+      tags:
+        - Issue Statuses
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueStatuses#GET
+      summary: List issue statuses
+      operationId: getIssueStatuses
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - issue_statuses
+                properties:
+                  issue_statuses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/issue_status'
+  /trackers.json:
+    get:
+      tags:
+        - Trackers
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Trackers#GET
+      summary: List trackers
+      operationId: getTrackers
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - trackers
+                properties:
+                  trackers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/tracker'
+  /projects/{project_id}/issue_categories.json:
+    get:
+      tags:
+        - Issue Categories
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueCategories#GET
+      summary: List issue categories
+      operationId: getIssueCategories
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/nometa'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - $ref: '#/components/parameters/x_redmine_nometa'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - issue_categories
+                properties:
+                  issue_categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/issue_category'
+                  total_count:
+                    type: integer
+    post:
+      tags:
+        - Issue Categories
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueCategories#POST
+      summary: Create issue category
+      operationId: createIssueCategory
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - issue_category
+              properties:
+                issue_category:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      type: string
+                    assigned_to_id:
+                      type: integer
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - issue_category
+                properties:
+                  issue_category:
+                    $ref: '#/components/schemas/issue_category'
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+  /enumerations/issue_priorities.json:
+    get:
+      tags:
+        - Enumerations
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Enumerations#GET
+      summary: List issue priorities
+      operationId: getIssuePriorities
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - issue_priorities
+                properties:
+                  issue_priorities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/issue_priority'
+  /enumerations/time_entry_activities.json:
+    get:
+      tags:
+        - Enumerations
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Enumerations#GET-2
+      summary: List time entry activities
+      operationId: getTimeEntryActivities
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - time_entry_activities
+                properties:
+                  time_entry_activities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/time_entry_activity'
+  /enumerations/document_categories.json:
+    get:
+      tags:
+        - Enumerations
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Enumerations#GET-3
+      summary: List document categories
+      operationId: getDocumentCategories
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - document_categories
+                properties:
+                  document_categories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/document_category'
+  /issue_categories/{issue_category_id}.json:
+    get:
+      tags:
+        - Issue Categories
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueCategories#GET-2
+      summary: Show issue category
+      operationId: getIssueCategory
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/issue_category_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - issue_category
+                properties:
+                  issue_category:
+                    $ref: '#/components/schemas/issue_category'
+    put:
+      tags:
+        - Issue Categories
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueCategories#PUT
+      summary: Update issue category
+      operationId: updateIssueCategory
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/issue_category_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                issue_category:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    assigned_to_id:
+                      type: integer
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+    delete:
+      tags:
+        - Issue Categories
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_IssueCategories#DELETE
+      summary: Delete issue category
+      operationId: deleteIssueCategory
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/issue_category_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - name: reassign_to_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: ''
+  /roles.json:
+    get:
+      tags:
+        - Roles
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Roles#GET
+      summary: List roles
+      operationId: getRoles
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - roles
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/id_name'
+  /roles/{role_id}.json:
+    get:
+      tags:
+        - Roles
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Roles#GET-2
+      summary: Show role
+      operationId: getRole
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/role_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - role
+                properties:
+                  role:
+                    $ref: '#/components/schemas/role'
+  /groups.json:
+    get:
+      tags:
+        - Groups
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Groups#GET
+      summary: List groups
+      operationId: getGroups
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - groups
+                properties:
+                  groups:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/group.simple'
+    post:
+      tags:
+        - Groups
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Groups#POST
+      summary: Create group
+      operationId: createGroup
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - group
+              properties:
+                group:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    user_ids:
+                      type: array
+                      items:
+                        type: integer
+                    custom_fields:
+                      $ref: '#/components/schemas/custom_fields'
+                    custom_field_values:
+                      $ref: '#/components/schemas/custom_field_values'
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  group:
+                    $ref: '#/components/schemas/group.simple'
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+  /groups/{group_id}.json:
+    get:
+      tags:
+        - Groups
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Groups#GET-2
+      summary: Show group
+      operationId: getGroup
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/group_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - name: include
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - users
+                - memberships
+          explode: false
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - group
+                properties:
+                  group:
+                    $ref: '#/components/schemas/group'
+    put:
+      tags:
+        - Groups
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Groups#PUT
+      summary: Update group
+      operationId: updateGroup
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/group_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                group:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    user_ids:
+                      type: array
+                      items:
+                        type: integer
+                    custom_fields:
+                      $ref: '#/components/schemas/custom_fields'
+                    custom_field_values:
+                      $ref: '#/components/schemas/custom_field_values'
+      responses:
+        '204':
+          description: ''
+    delete:
+      tags:
+        - Groups
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Groups#DELETE
+      summary: Delete group
+      operationId: deleteGroup
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/group_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+  /groups/{group_id}/users.json:
+    post:
+      tags:
+        - Groups
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Groups#POST-2
+      summary: Add user to group
+      operationId: addUserToGroup
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/group_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+              properties:
+                user_id:
+                  type: integer
+      responses:
+        '204':
+          description: ''
+  /groups/{group_id}/users/{user_id}.json:
+    delete:
+      tags:
+        - Groups
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Groups#DELETE-2
+      summary: Remove user from group
+      operationId: removeUserFromGroup
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/group_id'
+        - $ref: '#/components/parameters/user_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+  /custom_fields.json:
+    get:
+      tags:
+        - Custom Fields
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_CustomFields#GET
+      summary: List custom fields
+      operationId: getCustomFields
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - custom_fields
+                properties:
+                  custom_fields:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/custom_field'
+  /search.json:
+    get:
+      tags:
+        - Search
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Search#GET
+      summary: Search
+      operationId: search
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/nometa'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - $ref: '#/components/parameters/x_redmine_nometa'
+        - name: q
+          in: query
+          schema:
+            type: string
+          required: true
+        - name: scope
+          in: query
+          schema:
+            type: string
+            enum:
+              - all
+              - my_project
+              - subprojects
+        - name: all_words
+          in: query
+          schema:
+            type: integer
+            enum:
+              - 1
+        - name: titles_only
+          in: query
+          schema:
+            type: integer
+            enum:
+              - 1
+        - name: issues
+          in: query
+          schema:
+            type: integer
+            enum:
+              - 1
+        - name: news
+          in: query
+          schema:
+            type: integer
+            enum:
+              - 1
+        - name: wiki_pages
+          in: query
+          schema:
+            type: integer
+            enum:
+              - 1
+        - name: projects
+          in: query
+          schema:
+            type: integer
+            enum:
+              - 1
+        - name: documents
+          in: query
+          schema:
+            type: integer
+            enum:
+              - 1
+        - name: changesets
+          in: query
+          schema:
+            type: integer
+            enum:
+              - 1
+        - name: messages
+          in: query
+          schema:
+            type: integer
+            enum:
+              - 1
+        - name: open_issues
+          in: query
+          schema:
+            type: integer
+            enum:
+              - 1
+        - name: attachments
+          in: query
+          schema:
+            type: string
+            enum:
+              - '0'
+              - '1'
+              - only
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - results
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/search'
+                  total_count:
+                    type: integer
+                  offset:
+                    type: integer
+                  limit:
+                    type: integer
+  /projects/{project_id}/files.json:
+    get:
+      tags:
+        - Files
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Files#GET
+      summary: List files
+      operationId: getFiles
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - files
+                properties:
+                  files:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/file'
+    post:
+      tags:
+        - Files
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_Files#POST
+      summary: Create file
+      operationId: createFile
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: object
+                  required:
+                    - token
+                  properties:
+                    token:
+                      type: string
+                    version_id:
+                      type: integer
+                    filename:
+                      type: string
+                    description:
+                      type: string
+                    content_type:
+                      type: string
+      responses:
+        '204':
+          description: ''
+  /my/account.json:
+    get:
+      tags:
+        - My Account
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_MyAccount#GET
+      summary: Show my account
+      operationId: getMyAccount
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/my_account'
+    put:
+      tags:
+        - My Account
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_MyAccount#PUT
+      summary: Update my account
+      operationId: updateMyAccount
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: object
+                  properties:
+                    login:
+                      type: string
+                    admin:
+                      type: boolean
+                    password:
+                      type: string
+                    firstname:
+                      type: string
+                    lastname:
+                      type: string
+                    mail:
+                      type: string
+                    language:
+                      type: string
+                    auth_source_id:
+                      type: integer
+                      nullable: true
+                    mail_notification:
+                      type: string
+                      enum:
+                        - all
+                        - selected
+                        - only_my_events
+                        - only_assigned
+                        - only_owner
+                        - none
+                    notified_project_ids:
+                      type: array
+                      items:
+                        type: integer
+                    must_change_passwd:
+                      type: boolean
+                    generate_password:
+                      type: boolean
+                    status:
+                      type: integer
+                    custom_fields:
+                      $ref: '#/components/schemas/custom_fields'
+                    custom_field_values:
+                      $ref: '#/components/schemas/custom_field_values'
+                    group_ids:
+                      type: array
+                      items:
+                        type: integer
+                pref:
+                  $ref: '#/components/schemas/pref'
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+  /journals/{journal_id}.json:
+    put:
+      tags:
+        - Journals
+      summary: Update journal
+      operationId: updateJournal
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/journal_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                journal:
+                  type: object
+                  properties:
+                    notes:
+                      type: string
+                      nullable: true
+                    private_notes:
+                      type: boolean
+      responses:
+        '204':
+          description: ''
+  /uploads.json:
+    post:
+      tags:
+        - Attachments
+      externalDocs:
+        url: https://www.redmine.org/projects/redmine/wiki/Rest_api#Attaching-files
+      summary: Upload attachment file
+      operationId: uploadAttachmentFile
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+        - name: filename
+          in: query
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - upload
+                properties:
+                  upload:
+                    type: object
+                    required:
+                      - id
+                      - token
+                    properties:
+                      id:
+                        type: integer
+                      token:
+                        type: string
+        '406':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errors'
+  /projects/{project_id}/repository/{repository_id}/revisions/{revision}/issues.json:
+    post:
+      tags:
+        - Repositories
+      summary: Add related issue
+      operationId: addRelatedIssue
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/repository_id'
+        - $ref: '#/components/parameters/revision'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - issue_id
+              properties:
+                issue_id:
+                  type: integer
+      responses:
+        '204':
+          description: ''
+  /projects/{project_id}/repository/{repository_id}/revisions/{revision}/issues/{issue_id}.json:
+    delete:
+      tags:
+        - Repositories
+      summary: Remove related issue
+      operationId: removeRelatedIssue
+      parameters:
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/project_id'
+        - $ref: '#/components/parameters/repository_id'
+        - $ref: '#/components/parameters/revision'
+        - $ref: '#/components/parameters/issue_id'
+        - $ref: '#/components/parameters/x_redmine_switch_user'
+      responses:
+        '204':
+          description: ''
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Redmine-API-Key
+    ApiKeyInQueryAuth:
+      type: apiKey
+      in: query
+      name: key
+  parameters:
+    format:
+      name: format
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+          - json
+          - xml
+    offset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+    limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+    nometa:
+      name: nometa
+      in: query
+      schema:
+        type: integer
+        enum:
+          - 1
+    x_redmine_switch_user:
+      name: X-Redmine-Switch-User
+      in: header
+      schema:
+        type: string
+        example: jsmith
+    x_redmine_nometa:
+      name: X-Redmine-Nometa
+      in: header
+      schema:
+        type: integer
+        enum:
+          - 1
+    issue_id:
+      name: issue_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    user_id:
+      name: user_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    project_id:
+      name: project_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    membership_id:
+      name: membership_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    time_entry_id:
+      name: time_entry_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    news_id:
+      name: news_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    issue_relation_id:
+      name: issue_relation_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    version_id:
+      name: version_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    wiki_page_title:
+      name: wiki_page_title
+      in: path
+      required: true
+      schema:
+        type: string
+    attachment_id:
+      name: attachment_id
+      in: path
+      required: true
+      schema:
+        type: number
+    filename:
+      name: filename
+      in: path
+      required: true
+      schema:
+        type: string
+    issue_category_id:
+      name: issue_category_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    role_id:
+      name: role_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    group_id:
+      name: group_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    journal_id:
+      name: journal_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    repository_id:
+      name: repository_id
+      in: path
+      required: true
+      schema:
+        type: integer
+    revision:
+      name: revision
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    id_name:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+    issue_status:
+      type: object
+      required:
+        - id
+        - name
+        - is_closed
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        is_closed:
+          type: boolean
+    custom_field_value:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        multiple:
+          type: boolean
+      additionalProperties:
+        description: 'value: string? | string[]'
+      example:
+        id: 0
+        name: string
+        value: string
+    issue.simple:
+      type: object
+      required:
+        - id
+        - project
+        - tracker
+        - status
+        - priority
+        - author
+        - subject
+        - description
+        - start_date
+        - due_date
+        - done_ratio
+        - is_private
+        - estimated_hours
+        - total_estimated_hours
+        - created_on
+        - updated_on
+        - closed_on
+      properties:
+        id:
+          type: integer
+        project:
+          $ref: '#/components/schemas/id_name'
+        tracker:
+          $ref: '#/components/schemas/id_name'
+        status:
+          $ref: '#/components/schemas/issue_status'
+        priority:
+          $ref: '#/components/schemas/id_name'
+        author:
+          $ref: '#/components/schemas/id_name'
+        assigned_to:
+          $ref: '#/components/schemas/id_name'
+        category:
+          $ref: '#/components/schemas/id_name'
+        subject:
+          type: string
+        description:
+          type: string
+          nullable: true
+        start_date:
+          type: string
+          nullable: true
+        due_date:
+          type: string
+          nullable: true
+        done_ratio:
+          type: integer
+        is_private:
+          type: boolean
+        estimated_hours:
+          type: number
+          nullable: true
+        total_estimated_hours:
+          type: number
+          nullable: true
+        spent_hours:
+          type: number
+        total_spent_hours:
+          type: number
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_field_value'
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+        closed_on:
+          type: string
+          format: date-time
+          nullable: true
+    custom_fields:
+      type: array
+      items:
+        type: object
+        required:
+          - id
+        properties:
+          id:
+            type: number
+        additionalProperties:
+          description: 'value: string? | string[]'
+        example:
+          id: 0
+          value: string
+    custom_field_values:
+      type: object
+      additionalProperties:
+        description: 'value: string? | string[]'
+      example:
+        '0': string
+    uploads:
+      type: array
+      items:
+        properties:
+          token:
+            type: string
+          filename:
+            type: string
+          description:
+            type: string
+          content_type:
+            type: string
+    issue:
+      type: object
+      required:
+        - id
+        - project
+        - tracker
+        - status
+        - priority
+        - author
+        - subject
+        - description
+        - start_date
+        - due_date
+        - done_ratio
+        - is_private
+        - estimated_hours
+        - total_estimated_hours
+        - created_on
+        - updated_on
+        - closed_on
+      properties:
+        id:
+          type: integer
+        project:
+          $ref: '#/components/schemas/id_name'
+        tracker:
+          $ref: '#/components/schemas/id_name'
+        status:
+          $ref: '#/components/schemas/issue_status'
+        priority:
+          $ref: '#/components/schemas/id_name'
+        author:
+          $ref: '#/components/schemas/id_name'
+        assigned_to:
+          $ref: '#/components/schemas/id_name'
+        category:
+          $ref: '#/components/schemas/id_name'
+        subject:
+          type: string
+        description:
+          type: string
+          nullable: true
+        start_date:
+          type: string
+          nullable: true
+        due_date:
+          type: string
+          nullable: true
+        done_ratio:
+          type: integer
+        is_private:
+          type: boolean
+        estimated_hours:
+          type: number
+          nullable: true
+        total_estimated_hours:
+          type: number
+          nullable: true
+        spent_hours:
+          type: number
+        total_spent_hours:
+          type: number
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_field_value'
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+        closed_on:
+          type: string
+          format: date-time
+          nullable: true
+        changesets:
+          type: array
+          items:
+            type: string
+        children:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - tracker
+              - subject
+            properties:
+              id:
+                type: integer
+              tracker:
+                $ref: '#/components/schemas/id_name'
+              subject:
+                type: string
+        attachments:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - filename
+              - filesize
+              - content_type
+              - description
+              - content_url
+              - author
+              - created_on
+            properties:
+              id:
+                type: integer
+              filename:
+                type: string
+              filesize:
+                type: integer
+              content_type:
+                type: string
+              description:
+                type: string
+              content_url:
+                type: string
+              author:
+                $ref: '#/components/schemas/id_name'
+              created_on:
+                type: string
+                format: data-time
+              thumbnail_url:
+                type: string
+        relations:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              issue_id:
+                type: integer
+              issue_to_id:
+                type: integer
+              relation_type:
+                type: string
+              delay:
+                type: integer
+                nullable: true
+        journals:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - user
+              - notes
+              - created_on
+              - private_notes
+              - details
+            properties:
+              id:
+                type: integer
+              user:
+                $ref: '#/components/schemas/id_name'
+              notes:
+                type: string
+              created_on:
+                type: string
+                format: date-time
+              private_notes:
+                type: boolean
+              details:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - property
+                    - name
+                    - old_value
+                    - new_value
+                  properties:
+                    property:
+                      type: string
+                    name:
+                      type: string
+                    old_value:
+                      type: string
+                      nullable: true
+                    new_value:
+                      type: string
+                      nullable: true
+        watchers:
+          type: array
+          items:
+            $ref: '#/components/schemas/id_name'
+        allowed_statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/issue_status'
+    project.simple:
+      type: object
+      required:
+        - id
+        - name
+        - identifier
+        - description
+        - status
+        - is_public
+        - inherit_members
+        - created_on
+        - updated_on
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        identifier:
+          type: string
+        description:
+          type: string
+          nullable: true
+        parent:
+          $ref: '#/components/schemas/id_name'
+        status:
+          type: integer
+        is_public:
+          type: boolean
+        inherit_members:
+          type: boolean
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_field_value'
+        trackers:
+          type: array
+          items:
+            $ref: '#/components/schemas/id_name'
+        issue_categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/id_name'
+        time_entry_activities:
+          type: array
+          items:
+            $ref: '#/components/schemas/id_name'
+        enabled_modules:
+          type: array
+          items:
+            $ref: '#/components/schemas/id_name'
+        issue_custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/id_name'
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+    project:
+      type: object
+      required:
+        - id
+        - name
+        - identifier
+        - description
+        - status
+        - is_public
+        - inherit_members
+        - created_on
+        - updated_on
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        identifier:
+          type: string
+        description:
+          type: string
+          nullable: true
+        homepage:
+          type: string
+          nullable: true
+        parent:
+          $ref: '#/components/schemas/id_name'
+        status:
+          type: integer
+        is_public:
+          type: boolean
+        inherit_members:
+          type: boolean
+        default_version:
+          $ref: '#/components/schemas/id_name'
+        default_assignee:
+          $ref: '#/components/schemas/id_name'
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_field_value'
+        trackers:
+          type: array
+          items:
+            $ref: '#/components/schemas/id_name'
+        issue_categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/id_name'
+        time_entry_activities:
+          type: array
+          items:
+            $ref: '#/components/schemas/id_name'
+        enabled_modules:
+          type: array
+          items:
+            $ref: '#/components/schemas/id_name'
+        issue_custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/id_name'
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+    errors:
+      type: object
+      required:
+        - errors
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+    membership:
+      type: object
+      required:
+        - id
+        - project
+        - roles
+      properties:
+        id:
+          type: integer
+        project:
+          $ref: '#/components/schemas/id_name'
+        user:
+          $ref: '#/components/schemas/id_name'
+        group:
+          $ref: '#/components/schemas/id_name'
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/id_name'
+    user.simple:
+      type: object
+      required:
+        - id
+        - login
+        - admin
+        - firstname
+        - lastname
+        - mail
+        - created_on
+        - updated_on
+        - last_login_on
+        - passwd_changed_on
+        - twofa_scheme
+      properties:
+        id:
+          type: integer
+        login:
+          type: string
+        admin:
+          type: boolean
+        firstname:
+          type: string
+        lastname:
+          type: string
+        mail:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+        last_login_on:
+          type: string
+          format: date-time
+          nullable: true
+        passwd_changed_on:
+          type: string
+          format: date-time
+          nullable: true
+        twofa_scheme:
+          type: object
+          nullable: true
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_field_value'
+    pref:
+      type: object
+      properties:
+        hide_mail:
+          type: boolean
+        time_zone:
+          type: string
+          nullable: true
+        comments_sorting:
+          type: string
+          enum:
+            - asc
+            - desc
+        warn_on_leaving_unsaved:
+          type: boolean
+        no_self_notified:
+          type: boolean
+        notify_about_high_priority_issues:
+          type: boolean
+        textarea_font:
+          type: string
+          enum:
+            - monospace
+            - proportional
+          nullable: true
+        recently_used_projects:
+          type: integer
+        history_default_tab:
+          type: string
+          enum:
+            - notes
+            - history
+            - properties
+            - time_entries
+            - changesets
+            - last_tab_visited
+        toolbar_language_options:
+          type: string
+        default_issue_query:
+          type: integer
+          nullable: true
+        default_project_query:
+          type: integer
+          nullable: true
+        auto_watch_on:
+          type: string
+          enum:
+            - issue_contributed_to
+          nullable: true
+    user:
+      type: object
+      required:
+        - id
+        - login
+        - admin
+        - firstname
+        - lastname
+        - mail
+        - created_on
+        - updated_on
+        - last_login_on
+        - passwd_changed_on
+        - twofa_scheme
+        - api_key
+        - status
+      properties:
+        id:
+          type: integer
+        login:
+          type: string
+        admin:
+          type: boolean
+        firstname:
+          type: string
+        lastname:
+          type: string
+        mail:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+        last_login_on:
+          type: string
+          format: date-time
+          nullable: true
+        passwd_changed_on:
+          type: string
+          format: date-time
+          nullable: true
+        twofa_scheme:
+          type: object
+          nullable: true
+        api_key:
+          type: string
+        status:
+          type: integer
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_field_value'
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/id_name'
+        memberships:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - project
+              - roles
+            properties:
+              id:
+                type: integer
+              project:
+                $ref: '#/components/schemas/id_name'
+              roles:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - id
+                    - name
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    inherited:
+                      type: boolean
+    time_entry:
+      type: object
+      required:
+        - id
+        - user
+        - activity
+        - hours
+        - comments
+        - spent_on
+        - created_on
+        - updated_on
+      properties:
+        id:
+          type: integer
+        project:
+          $ref: '#/components/schemas/id_name'
+        issue:
+          type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+        user:
+          $ref: '#/components/schemas/id_name'
+        activity:
+          $ref: '#/components/schemas/id_name'
+        hours:
+          type: number
+        comments:
+          type: string
+          nullable: true
+        spent_on:
+          type: string
+          format: date
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_field_value'
+    attachment:
+      type: object
+      required:
+        - id
+        - filename
+        - filesize
+        - content_type
+        - description
+        - content_url
+        - author
+        - created_on
+      properties:
+        id:
+          type: integer
+        filename:
+          type: string
+        filesize:
+          type: integer
+        content_type:
+          type: string
+        description:
+          type: string
+        content_url:
+          type: string
+        thumbnail_url:
+          type: string
+        author:
+          $ref: '#/components/schemas/id_name'
+        created_on:
+          type: string
+          format: data-time
+    news_comment:
+      type: object
+      required:
+        - id
+        - author
+        - content
+      properties:
+        id:
+          type: integer
+        author:
+          $ref: '#/components/schemas/id_name'
+        content:
+          type: string
+    news:
+      type: object
+      required:
+        - id
+        - project
+        - author
+        - title
+        - description
+        - created_on
+      properties:
+        id:
+          type: integer
+        project:
+          $ref: '#/components/schemas/id_name'
+        author:
+          $ref: '#/components/schemas/id_name'
+        title:
+          type: string
+        summary:
+          type: string
+        description:
+          type: string
+        created_on:
+          type: string
+          format: date-time
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/attachment'
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/news_comment'
+    issue_relation:
+      type: object
+      required:
+        - id
+        - issue_id
+        - issue_to_id
+        - relation_type
+        - delay
+      properties:
+        id:
+          type: integer
+        issue_id:
+          type: integer
+        issue_to_id:
+          type: integer
+        relation_type:
+          type: string
+        delay:
+          type: integer
+          nullable: true
+    version.simple:
+      type: object
+      required:
+        - id
+        - project
+        - name
+        - status
+        - due_date
+        - sharing
+        - description
+        - wiki_page_title
+        - created_on
+        - updated_on
+      properties:
+        id:
+          type: integer
+        project:
+          $ref: '#/components/schemas/id_name'
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+            - open
+            - locked
+            - closed
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        sharing:
+          type: string
+          enum:
+            - none
+            - descendants
+            - hierarchy
+            - tree
+            - system
+        wiki_page_title:
+          type: string
+          nullable: true
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_field_value'
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+    version:
+      type: object
+      required:
+        - id
+        - project
+        - name
+        - status
+        - due_date
+        - sharing
+        - description
+        - wiki_page_title
+        - created_on
+        - updated_on
+      properties:
+        id:
+          type: integer
+        project:
+          $ref: '#/components/schemas/id_name'
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+            - open
+            - locked
+            - closed
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        sharing:
+          type: string
+          enum:
+            - none
+            - descendants
+            - hierarchy
+            - tree
+            - system
+        wiki_page_title:
+          type: string
+          nullable: true
+        estimated_hours:
+          type: number
+        spent_hours:
+          type: number
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_field_value'
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+    wiki_pages:
+      type: object
+      required:
+        - title
+        - version
+        - created_on
+        - updated_on
+      properties:
+        title:
+          type: integer
+        parent:
+          type: object
+          required:
+            - title
+          properties:
+            title:
+              type: string
+        version:
+          type: integer
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+    wiki_page:
+      type: object
+      required:
+        - title
+        - text
+        - version
+        - author
+        - comments
+        - created_on
+        - updated_on
+      properties:
+        title:
+          type: string
+        parent:
+          type: object
+          required:
+            - title
+          properties:
+            title:
+              type: string
+        text:
+          type: string
+        version:
+          type: integer
+        author:
+          $ref: '#/components/schemas/id_name'
+        comments:
+          type: string
+          nullable: true
+        created_on:
+          type: string
+          format: date-time
+        updated_on:
+          type: string
+          format: date-time
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/attachment'
+    query:
+      type: object
+      required:
+        - id
+        - name
+        - is_public
+        - project_id
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        is_public:
+          type: boolean
+        project_id:
+          type: integer
+          nullable: true
+    tracker:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        default_status:
+          $ref: '#/components/schemas/id_name'
+        description:
+          type: string
+          nullable: true
+        enabled_standard_fields:
+          type: array
+          items:
+            type: string
+    issue_category:
+      type: object
+      required:
+        - id
+        - project
+        - name
+      properties:
+        id:
+          type: integer
+        project:
+          $ref: '#/components/schemas/id_name'
+        name:
+          type: string
+        assigned_to:
+          $ref: '#/components/schemas/id_name'
+    issue_priority:
+      type: object
+      required:
+        - id
+        - name
+        - is_default
+        - active
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        is_default:
+          type: boolean
+        active:
+          type: boolean
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_field_value'
+    time_entry_activity:
+      type: object
+      required:
+        - id
+        - name
+        - is_default
+        - active
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        is_default:
+          type: boolean
+        active:
+          type: boolean
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_field_value'
+    document_category:
+      type: object
+      required:
+        - id
+        - name
+        - is_default
+        - active
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        is_default:
+          type: boolean
+        active:
+          type: boolean
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_field_value'
+    role:
+      type: object
+      required:
+        - id
+        - name
+        - assignable
+        - issue_visibility
+        - time_entries_visibility
+        - users_visibility
+        - permissions
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        assignable:
+          type: boolean
+        issues_visibility:
+          type: string
+        time_entries_visibility:
+          type: string
+        users_visibility:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+    group.simple:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_field_value'
+    group:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        custom_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/custom_field_value'
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/id_name'
+        memberships:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - project
+              - roles
+            properties:
+              id:
+                type: integer
+              project:
+                $ref: '#/components/schemas/id_name'
+              roles:
+                type: array
+                items:
+                  $ref: '#/components/schemas/id_name'
+    custom_field:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        customized_type:
+          type: string
+          enum:
+            - issue
+            - time_entry
+            - project
+            - version
+            - document
+            - user
+            - group
+            - time_entry_activity
+            - issue_priority
+            - document_category
+        field_format:
+          type: string
+          enum:
+            - enumeration
+            - string
+            - version
+            - attachment
+            - user
+            - list
+            - link
+            - float
+            - int
+            - date
+            - bool
+            - text
+        regexp:
+          type: string
+        min_length:
+          type: integer
+          nullable: true
+        max_length:
+          type: integer
+          nullable: true
+        is_required:
+          type: boolean
+        is_filter:
+          type: boolean
+        searchable:
+          type: boolean
+        multiple:
+          type: boolean
+        default_value:
+          type: string
+          nullable: true
+        visible:
+          type: boolean
+        trackers:
+          type: array
+          items:
+            $ref: '#/components/schemas/id_name'
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/role'
+        possible_values:
+          type: array
+          items:
+            type: object
+            properties:
+              value:
+                type: string
+              label:
+                type: string
+    search:
+      type: object
+      required:
+        - id
+        - title
+        - type
+        - url
+        - description
+        - datetime
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        type:
+          type: string
+        url:
+          type: string
+        description:
+          type: string
+        datetime:
+          type: string
+          format: date-time
+    file:
+      type: object
+      required:
+        - id
+        - filename
+        - filesize
+        - content_type
+        - description
+        - content_url
+        - author
+        - created_on
+        - digest
+        - downloads
+      properties:
+        id:
+          type: integer
+        filename:
+          type: string
+        filesize:
+          type: integer
+        content_type:
+          type: string
+        description:
+          type: string
+        content_url:
+          type: string
+        thumbnail_url:
+          type: string
+        author:
+          $ref: '#/components/schemas/id_name'
+        created_on:
+          type: string
+          format: date-time
+        version:
+          $ref: '#/components/schemas/id_name'
+        digest:
+          type: string
+        downloads:
+          type: integer
+    my_account:
+      type: object
+      required:
+        - user
+      properties:
+        user:
+          required:
+            - id
+            - login
+            - admin
+            - firstname
+            - lastname
+            - mail
+            - created_on
+            - last_login_on
+            - api_key
+          properties:
+            id:
+              type: integer
+            login:
+              type: string
+            admin:
+              type: boolean
+            firstname:
+              type: string
+            lastname:
+              type: string
+            mail:
+              type: string
+            created_on:
+              type: string
+              format: date-time
+            last_login_on:
+              type: string
+              format: date-time
+            api_key:
+              type: string
+            custom_fields:
+              type: array
+              items:
+                $ref: '#/components/schemas/custom_field_value'
