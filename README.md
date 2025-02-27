@@ -2,7 +2,7 @@
 
 **Status: Works for me but is still very beta**
 
-Let Claude be your Redmine assistant! Compatible with Redmine 5.0+ and tested on Redmine 6.0.3. MCP Redmine connects Claude Desktop to your Redmine instance, allowing it to:
+Let Claude be your Redmine assistant! Compatible with Redmine 5.0+ and tested on Redmine 6.0.3, but will likely work with older versions as well. MCP Redmine connects Claude Desktop to your Redmine instance, allowing it to:
 
 - Search and browse projects and issues
 - Create and update issues with full markdown support
