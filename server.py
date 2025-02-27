@@ -28,7 +28,7 @@ def redmine_request(path: str, method: str = 'get', data: dict = None, params: d
         params: Dictionary for query parameters
 
     Returns:
-        str: YAML string containing response status and body
+        str: YAML string containing response status code, body and error message
     """
     headers = {
         'X-Redmine-API-Key': REDMINE_API_KEY,
