@@ -59,7 +59,8 @@ def redmine_request(path: str, method: str = 'get', data: dict = None, params: d
 def redmine_paths_list() -> str:
     """Return a list of available API paths from OpenAPI spec
     
-    Retrieves all endpoint paths defined in the Redmine OpenAPI specification.
+    Retrieves all endpoint paths defined in the Redmine OpenAPI specification. Remember that you can Use the
+    redmine_paths_info tool to get the full specfication for a path.
     
     Returns:
         str: YAML string containing a list of path templates (e.g. '/issues.json')
