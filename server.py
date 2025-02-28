@@ -1,9 +1,7 @@
-import os, yaml
-import pathlib
+import os, yaml, pathlib
 from urllib.parse import urljoin
 
 import httpx
-
 from mcp.server.fastmcp import FastMCP
 
 # Constants from environment
@@ -15,7 +13,6 @@ with open('redmine_openapi.yml') as f:
     SPEC = yaml.safe_load(f)
 
 # Core
-
 def request(path: str, method: str = 'get', data: dict = None, params: dict = None,
             content_type: str = 'application/json', content: bytes = None) -> dict:
     headers = {'X-Redmine-API-Key': REDMINE_API_KEY, 'Content-Type': content_type}
@@ -23,23 +20,22 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
 
     try:
         response = httpx.request(method=method.lower(), url=url, json=data, params=params, headers=headers,
-                                 content=content, timeout=45)
+                                 content=content, timeout=60.0)
         response.raise_for_status()
 
-        return {
-            "status_code": response.status_code,
-            "body": response.json() if content_type == "application/json" else response.content,
-            "error": ""
-        }
+        body = None
+        if response.content:
+            if content_type.startswith('application/json'):
+                body = response.json()
+            else:
+                body = response.content
+
+        return {"status_code": response.status_code, "body": body, "error": ""}
     except Exception as e:
-        return {
-            "status_code": getattr(getattr(e, 'response', None), 'status_code', 0),
-            "body": None,
-            "error": f"{e.__class__.__name__}: {str(e)}",
-        }
+        status = getattr(getattr(e, 'response', None), 'status_code', 0)
+        return {"status_code": status, "body": None, "error": f"{e.__class__.__name__}: {str(e)}"}
 
 # Tools
-
 mcp = FastMCP("Redmine MCP server")
 
 @mcp.tool()
@@ -112,9 +108,9 @@ def redmine_upload(file_path: str, description: str = None) -> str:
         with open(path, 'rb') as f:
             file_content = f.read()
 
-        return yaml.dump(
-            request(path='uploads.json', method='post', params=params, content_type='application/octet-stream',
-                    content=file_content))
+        result = request(path='uploads.json', method='post', params=params,
+                         content_type='application/octet-stream', content=file_content)
+        return yaml.dump(result)
     except Exception as e:
         return yaml.dump({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {str(e)}"})
 
@@ -137,53 +133,22 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
         assert path.is_absolute(), f"Path must be fully qualified, got: {save_path}"
         assert not path.is_dir(), f"Path can't be an existing directory, got: {save_path}"
 
-        # Get filename if not provided by fetching attachment info
         if not filename:
-            # Use request function to get attachment metadata
             attachment_response = request(f"attachments/{attachment_id}.json", "get")
+            if attachment_response["status_code"] != 200:
+                return yaml.dump(attachment_response)
 
-            # Check if request was successful
-            if attachment_response["status_code"] != 200 or not attachment_response.get("body"):
-                return yaml.dump(attachment_response)  # Return the error
+            filename = attachment_response["body"]["attachment"]["filename"]
 
-            # Extract filename from attachment response
-            try:
-                filename = attachment_response["body"]["attachment"]["filename"]
-            except (KeyError, TypeError):
-                return yaml.dump({
-                    "status_code": 400,
-                    "body": None,
-                    "error": "Unable to extract filename from attachment data"
-                })
+        response = request(f"attachments/download/{attachment_id}/{filename}", "get",
+                           content_type="application/octet-stream")
+        if response["status_code"] != 200 or not response["body"]:
+            return yaml.dump(response)
 
-        # Get the file using request function
-        download_path = f"attachments/download/{attachment_id}/{filename}"
-        response = request(download_path, "get", content_type="application/octet-stream")
-
-        if response["status_code"] != 200:
-            return yaml.dump(response)  # Return the error
-
-        # Response body will contain binary data when content_type is set to octet-stream
-        if response["body"] is None:
-            return yaml.dump({"status_code": 400, "body": None, "error": "No content received from server"})
-
-        # Write file content to disk
         with open(path, 'wb') as f:
-            f.write(response["body"] if isinstance(response["body"], bytes) else response["body"].encode('utf-8'))
+            f.write(response["body"])
 
-        # Calculate file size
-        file_size = path.stat().st_size
-
-        return yaml.dump({
-            "status_code": 200,
-            "body": {
-                "saved_to": str(path),
-                "filename": filename,
-                "size_bytes": file_size
-            },
-            "error": ""
-        })
-
+        return yaml.dump({"status_code": 200, "body": {"saved_to": str(path), "filename": filename}, "error": ""})
     except Exception as e:
         return yaml.dump({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {str(e)}"})
 
