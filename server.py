@@ -131,7 +131,7 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
     try:
         path = pathlib.Path(save_path).expanduser()
         assert path.is_absolute(), f"Path must be fully qualified, got: {save_path}"
-        assert not path.is_dir(), f"Path can't be an existing directory, got: {save_path}"
+        assert not path.is_dir(), f"Path can't be a directory, got: {save_path}"
 
         if not filename:
             attachment_response = request(f"attachments/{attachment_id}.json", "get")
