@@ -2,10 +2,11 @@
 
 **Status: Works great, but still in beta**
 
-Let Claude be your Redmine assistant! Compatible with Redmine 5.0+ and tested on Redmine 6.0.3, but will likely work with older versions as well. MCP Redmine connects Claude Desktop to your Redmine instance, allowing it to:
+Let Claude be your Redmine assistant! MCP Redmine connects Claude Desktop to your Redmine instance, allowing it to:
 
 - Search and browse projects and issues
 - Create and update issues with full markdown support
+- Upload and download file attachments
 - Manage and track time entries
 - Update issue statuses and fields
 - Access comprehensive Redmine API functionality
@@ -16,9 +17,11 @@ Uses httpx for API requests and integrates with the Redmine OpenAPI specificatio
 
 ## Requirements
 
-- Access to a Redmine instance (5.0+, tested on 6.0.3)
+- Access to a Redmine instance
 - Redmine API key
 - Python 3.10+
+
+The openapi specification used is for redmine 5.0, tested on Redmine 6.0.3, but will likely work with older versions as well.
 
 ## API
 
@@ -63,6 +66,37 @@ Uses httpx for API requests and integrates with the Redmine OpenAPI specificatio
       - id: 1
         subject: "Fix login page"
         ...
+  error: ""
+  ```
+
+- **redmine_upload**
+  - Upload a file to Redmine and get a token for attachment
+  - Inputs:
+    - `absolute_file_path` (string): Absolute path to the file to upload
+    - `description` (string, optional): Optional description for the file
+  - Returns YAML string with the same format as redmine_request, including upload token:
+  ```yaml
+  status_code: 201
+  body:
+    upload:
+      token: "7167.ed1ccdb093229ca1bd0b043618d88743"
+    filename: "document.pdf"
+  error: ""
+  ```
+
+- **redmine_download**
+  - Download an attachment from Redmine and save it to a local file
+  - Inputs:
+    - `attachment_id` (integer): The ID of the attachment to download
+    - `absolute_save_path` (string): Absolute path where the file should be saved
+    - `filename` (string, optional): Optional filename to use (determined automatically if not provided)
+  - Returns YAML string with download results:
+  ```yaml
+  status_code: 200
+  body:
+    saved_to: "/path/to/downloaded/file.pdf"
+    filename: "file.pdf"
+    size_bytes: 12345
   error: ""
   ```
 
@@ -155,16 +189,12 @@ Contributions are warmly welcomed! Whether it's bug reports, feature requests, d
 
 The goal is to make Redmine project management with Claude even better, and your insights and contributions help achieve that.
 
-## Todo
-
-- File and attachment uploads
-
 ## Acknowledgments
 
 This project builds on the excellent work of others:
 
 - [httpx](https://www.python-httpx.org/) - For handling HTTP requests
-- [Redmine OpenAPI Specification](https://github.com/d-yoshi/redmine-openapi) - For the comprehensive API specification (based on Redmine 5.0, but likely compatible with older versions)
+- [Redmine OpenAPI Specification](https://github.com/d-yoshi/redmine-openapi) - For the comprehensive API specification
 - [Redmine](https://www.redmine.org/) - The flexible project management web application
 
 ## License
