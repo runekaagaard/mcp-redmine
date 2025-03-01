@@ -72,15 +72,15 @@ The openapi specification used is for redmine 5.0, tested on Redmine 6.0.3, but 
 - **redmine_upload**
   - Upload a file to Redmine and get a token for attachment
   - Inputs:
-    - `absolute_file_path` (string): Absolute path to the file to upload
+    - `file_path` (string): Fully qualified path to the file to upload
     - `description` (string, optional): Optional description for the file
   - Returns YAML string with the same format as redmine_request, including upload token:
   ```yaml
   status_code: 201
   body:
     upload:
-      token: "7167.ed1ccdb093229ca1bd0b043618d88743"
-    filename: "document.pdf"
+      id: 7
+      token: "7.ed32257a2ab0f7526c0d72c32994c58b131bb2c0775f7aa84aae01ea8397ea54"
   error: ""
   ```
 
@@ -88,7 +88,7 @@ The openapi specification used is for redmine 5.0, tested on Redmine 6.0.3, but 
   - Download an attachment from Redmine and save it to a local file
   - Inputs:
     - `attachment_id` (integer): The ID of the attachment to download
-    - `absolute_save_path` (string): Absolute path where the file should be saved
+    - `save_path` (string): Fully qualified path where the file should be saved
     - `filename` (string, optional): Optional filename to use (determined automatically if not provided)
   - Returns YAML string with download results:
   ```yaml
@@ -96,7 +96,6 @@ The openapi specification used is for redmine 5.0, tested on Redmine 6.0.3, but 
   body:
     saved_to: "/path/to/downloaded/file.pdf"
     filename: "file.pdf"
-    size_bytes: 12345
   error: ""
   ```
 
