@@ -25,9 +25,9 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
 
         body = None
         if response.content:
-            if content_type.startswith('application/json'):
+            try:
                 body = response.json()
-            else:
+            except ValueError:
                 body = response.content
 
         return {"status_code": response.status_code, "body": body, "error": ""}
