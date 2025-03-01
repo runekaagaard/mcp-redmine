@@ -32,8 +32,20 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
 
         return {"status_code": response.status_code, "body": body, "error": ""}
     except Exception as e:
-        status = getattr(getattr(e, 'response', None), 'status_code', 0)
-        return {"status_code": status, "body": None, "error": f"{e.__class__.__name__}: {str(e)}"}
+        try:
+            status_code = e.response.status_code
+        except:
+            status_code = 0
+
+        try:
+            body = e.response.json()
+        except:
+            try:
+                body = e.response.text
+            except:
+                body = None
+
+        return {"status_code": status_code, "body": body, "error": f"{e.__class__.__name__}: {e}"}
 
 # Tools
 mcp = FastMCP("Redmine MCP server")
@@ -112,7 +124,7 @@ def redmine_upload(file_path: str, description: str = None) -> str:
                          content_type='application/octet-stream', content=file_content)
         return yaml.dump(result)
     except Exception as e:
-        return yaml.dump({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {str(e)}"})
+        return yaml.dump({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
 
 @mcp.tool()
 def redmine_download(attachment_id: int, save_path: str, filename: str = None) -> str:
@@ -150,7 +162,7 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
 
         return yaml.dump({"status_code": 200, "body": {"saved_to": str(path), "filename": filename}, "error": ""})
     except Exception as e:
-        return yaml.dump({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {str(e)}"})
+        return yaml.dump({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
 
 if __name__ == "__main__":
     mcp.run()
