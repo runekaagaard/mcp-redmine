@@ -7,6 +7,11 @@ from mcp.server.fastmcp import FastMCP
 # Constants from environment
 REDMINE_URL = os.environ['REDMINE_URL']
 REDMINE_API_KEY = os.environ['REDMINE_API_KEY']
+if "REDMINE_REQUEST_INSTRUCTIONS" in os.environ:
+    with open(os.environ["REDMINE_REQUEST_INSTRUCTIONS"]) as f:
+        REDMINE_REQUEST_INSTRUCTIONS = f.read()
+else:
+    REDMINE_REQUEST_INSTRUCTIONS = ""
 
 # Load OpenAPI spec
 with open('redmine_openapi.yml') as f:
@@ -50,20 +55,20 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
 # Tools
 mcp = FastMCP("Redmine MCP server")
 
-@mcp.tool()
+@mcp.tool(description="""
+Make a request to the Redmine API
+
+Args:
+    path: API endpoint path (e.g. '/issues.json')
+    method: HTTP method to use (default: 'get')
+    data: Dictionary for request body (for POST/PUT)
+    params: Dictionary for query parameters
+
+Returns:
+    str: YAML string containing response status code, body and error message
+
+{}""".format(REDMINE_REQUEST_INSTRUCTIONS).strip())
 def redmine_request(path: str, method: str = 'get', data: dict = None, params: dict = None) -> str:
-    """
-    Make a request to the Redmine API
-
-    Args:
-        path: API endpoint path (e.g. '/issues.json')
-        method: HTTP method to use (default: 'get')
-        data: Dictionary for request body (for POST/PUT)
-        params: Dictionary for query parameters
-
-    Returns:
-        str: YAML string containing response status code, body and error message
-    """
     return yaml.dump(request(path, method=method, data=data, params=params))
 
 @mcp.tool()

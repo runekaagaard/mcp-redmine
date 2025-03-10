@@ -111,7 +111,8 @@ Add to your `claude_desktop_config.json`:
       "args": ["--directory", "/path/to/mcp-redmine", "run", "server.py"],
       "env": {
         "REDMINE_URL": "https://your-redmine-instance.example.com",
-        "REDMINE_API_KEY": "your-api-key"
+        "REDMINE_API_KEY": "your-api-key",
+        "REDMINE_REQUEST_INSTRUCTIONS": "/path/to/instructions.md"
       }
     }
   }
@@ -122,6 +123,7 @@ Environment Variables:
 
 - `REDMINE_URL`: URL of your Redmine instance (required)
 - `REDMINE_API_KEY`: Your Redmine API key (required, see below for how to get it)
+- `REDMINE_REQUEST_INSTRUCTIONS`: Path to a file containing additional instructions for the redmine_request tool (optional)
 
 ## Getting Your Redmine API Key
 
