@@ -1,6 +1,6 @@
 # MCP Redmine
 
-**Status: Works great, but still in beta**
+**Status: Works great and is in daily use without any known bugs.**
 
 Let Claude be your Redmine assistant! MCP Redmine connects Claude Desktop to your Redmine instance, allowing it to:
 
