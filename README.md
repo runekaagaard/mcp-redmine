@@ -13,6 +13,10 @@ Let Claude be your Redmine assistant! MCP Redmine connects Claude Desktop to you
 
 Uses httpx for API requests and integrates with the Redmine OpenAPI specification for comprehensive API coverage.
 
+<a href="https://glama.ai/mcp/servers/y08jjdmkyr">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/y08jjdmkyr/badge" alt="Redmine MCP server" />
+</a>
+
 ![MCP Redmine in action](screenshot.png)
 
 ## Requirements
