@@ -2,6 +2,8 @@
 
 **Status: Works great and is in daily use without any known bugs.**
 
+**Status2: I just added the package to PyPI and updated the usage instructions. Please report any issues :)**
+
 Let Claude be your Redmine assistant! MCP Redmine connects Claude Desktop to your Redmine instance, allowing it to:
 
 - Search and browse projects and issues
@@ -13,15 +15,49 @@ Let Claude be your Redmine assistant! MCP Redmine connects Claude Desktop to you
 
 Uses httpx for API requests and integrates with the Redmine OpenAPI specification for comprehensive API coverage.
 
-![MCP Redmine in action](screenshot.png)
+![MCP Redmine in action](https://raw.githubusercontent.com/runekaagaard/mcp-redmine/refs/heads/main/screenshot.png)
 
-## Requirements
+## Installation
 
-- Access to a Redmine instance
-- Redmine API key
-- Python 3.10+
+Ensure you have uv installed:
+```bash
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
-The openapi specification used is for redmine 5.0, tested on Redmine 6.0.3, but will likely work with older versions as well.
+## Usage with Claude Desktop
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "redmine": {
+      "command": "uvx",
+      "args": ["--from", "mcp-redmine==2025.04.09.091234", "mcp-redmine"],
+      "env": {
+        "REDMINE_URL": "https://your-redmine-instance.example.com",
+        "REDMINE_API_KEY": "your-api-key",
+        "REDMINE_REQUEST_INSTRUCTIONS": "/path/to/instructions.md"
+      }
+    }
+  }
+}
+```
+
+## Environment Variables
+
+- `REDMINE_URL`: URL of your Redmine instance (required)
+- `REDMINE_API_KEY`: Your Redmine API key (required, see below for how to get it)
+- `REDMINE_REQUEST_INSTRUCTIONS`: Path to a file containing additional instructions for the redmine_request tool (optional)
+
+## Getting Your Redmine API Key
+
+1. Log in to your Redmine instance
+2. Go to "My account" (typically found in the top-right menu)
+3. On the right side of the page, you should see "API access key"
+4. Click "Show" to view your existing key or "Generate" to create a new one
+5. Copy this key for use in your configuration
 
 ## API
 
@@ -98,55 +134,6 @@ The openapi specification used is for redmine 5.0, tested on Redmine 6.0.3, but 
     filename: "file.pdf"
   error: ""
   ```
-
-## Usage with Claude Desktop
-
-Add to your `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "redmine": {
-      "command": "uv",
-      "args": ["--directory", "/path/to/mcp-redmine", "run", "server.py"],
-      "env": {
-        "REDMINE_URL": "https://your-redmine-instance.example.com",
-        "REDMINE_API_KEY": "your-api-key",
-        "REDMINE_REQUEST_INSTRUCTIONS": "/path/to/instructions.md"
-      }
-    }
-  }
-}
-```
-
-Environment Variables:
-
-- `REDMINE_URL`: URL of your Redmine instance (required)
-- `REDMINE_API_KEY`: Your Redmine API key (required, see below for how to get it)
-- `REDMINE_REQUEST_INSTRUCTIONS`: Path to a file containing additional instructions for the redmine_request tool (optional)
-
-## Getting Your Redmine API Key
-
-1. Log in to your Redmine instance
-2. Go to "My account" (typically found in the top-right menu)
-3. On the right side of the page, you should see "API access key"
-4. Click "Show" to view your existing key or "Generate" to create a new one
-5. Copy this key for use in your configuration
-
-## Installation
-
-1. Clone repository:
-```bash
-git clone https://github.com/runekaagaard/mcp-redmine.git
-```
-
-2. Ensure you have uv
-```bash
-# Install uv if you haven't already
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-3. Add Redmine configuration to claude_desktop_config.json (see above)
 
 ## Examples
 

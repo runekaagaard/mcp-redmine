@@ -14,7 +14,8 @@ else:
     REDMINE_REQUEST_INSTRUCTIONS = ""
 
 # Load OpenAPI spec
-with open('redmine_openapi.yml') as f:
+current_dir = pathlib.Path(__file__).parent
+with open(current_dir / 'redmine_openapi.yml') as f:
     SPEC = yaml.safe_load(f)
 
 # Core
@@ -169,5 +170,9 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
     except Exception as e:
         return yaml.dump({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for the mcp-redmine package."""
     mcp.run()
+
+if __name__ == "__main__":
+    main()
