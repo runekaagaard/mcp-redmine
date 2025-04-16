@@ -34,7 +34,8 @@ Add to your `claude_desktop_config.json`:
   "mcpServers": {
     "redmine": {
       "command": "uvx",
-      "args": ["--from", "mcp-redmine==2025.04.09.153531", "mcp-redmine"],
+      "args": ["--from", "mcp-redmine==2025.04.09.153531", 
+               "--refresh-package", "mcp-redmine", "mcp-redmine"],
       "env": {
         "REDMINE_URL": "https://your-redmine-instance.example.com",
         "REDMINE_API_KEY": "your-api-key",
@@ -184,6 +185,25 @@ This project builds on the excellent work of others:
 - [httpx](https://www.python-httpx.org/) - For handling HTTP requests
 - [Redmine OpenAPI Specification](https://github.com/d-yoshi/redmine-openapi) - For the comprehensive API specification
 - [Redmine](https://www.redmine.org/) - The flexible project management web application
+
+## Developing
+
+First clone the github repository and install the dependencies:
+
+```
+git clone git@github.com:runekaagaard/mcp-redmine.git
+cd mcp-redmine
+uv sync
+```
+
+Then set this in claude_desktop_config.json:
+
+```
+...
+"command": "uv",
+"args": ["run", "--directory", "/path/to/mcp-redmine", "-m", "mcp_redmine.server", "main"],
+...
+```
 
 ## License
 

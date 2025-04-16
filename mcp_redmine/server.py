@@ -3,6 +3,11 @@ from urllib.parse import urljoin
 
 import httpx
 from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp.utilities.logging import get_logger
+
+### Constants ###
+
+VERSION = "2025.04.09.153531"
 
 # Constants from environment
 REDMINE_URL = os.environ['REDMINE_URL']
@@ -55,6 +60,7 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
 
 # Tools
 mcp = FastMCP("Redmine MCP server")
+get_logger(__name__).info(f"Starting MCP Redmine version {VERSION}")
 
 @mcp.tool(description="""
 Make a request to the Redmine API
