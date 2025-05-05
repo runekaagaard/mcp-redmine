@@ -186,6 +186,13 @@ uv sync
 
 Then set this in claude_desktop_config.json:
 
+```
+...
+"command": "uv",
+"args": ["run", "--directory", "/path/to/mcp-redmine", "-m", "mcp_redmine.server", "main"],
+...
+```
+
 ## My Other LLM Projects
 
 - **[MCP Alchemy](https://github.com/runekaagaard/mcp-alchemy)** - Connect Claude Desktop to databases for exploring schema and running SQL.
@@ -211,13 +218,6 @@ This project builds on the excellent work of others:
 - [httpx](https://www.python-httpx.org/) - For handling HTTP requests
 - [Redmine OpenAPI Specification](https://github.com/d-yoshi/redmine-openapi) - For the comprehensive API specification
 - [Redmine](https://www.redmine.org/) - The flexible project management web application
-
-```
-...
-"command": "uv",
-"args": ["run", "--directory", "/path/to/mcp-redmine", "-m", "mcp_redmine.server", "main"],
-...
-```
 
 ## License
 
