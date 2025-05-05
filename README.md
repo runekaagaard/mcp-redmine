@@ -50,7 +50,7 @@ Add to your `claude_desktop_config.json`:
 
 - `REDMINE_URL`: URL of your Redmine instance (required)
 - `REDMINE_API_KEY`: Your Redmine API key (required, see below for how to get it)
-- `REDMINE_REQUEST_INSTRUCTIONS`: Path to a file containing additional instructions for the redmine_request tool (optional)
+- `REDMINE_REQUEST_INSTRUCTIONS`: Path to a file containing additional instructions for the redmine_request tool (optional). I've found it works great to have the LLM generate that file after a session. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md))
 
 ## Getting Your Redmine API Key
 
@@ -174,6 +174,18 @@ MCP Redmine is listed in the following MCP directory sites and repositories:
 - [MCP.so](https://mcp.so/server/mcp-redmine)
 - [Glama](https://glama.ai/mcp/servers/@runekaagaard/mcp-redmine)
 
+## Developing
+
+First clone the github repository and install the dependencies:
+
+```
+git clone git@github.com:runekaagaard/mcp-redmine.git
+cd mcp-redmine
+uv sync
+```
+
+Then set this in claude_desktop_config.json:
+
 ## My Other LLM Projects
 
 - **[MCP Alchemy](https://github.com/runekaagaard/mcp-alchemy)** - Connect Claude Desktop to databases for exploring schema and running SQL.
@@ -199,18 +211,6 @@ This project builds on the excellent work of others:
 - [httpx](https://www.python-httpx.org/) - For handling HTTP requests
 - [Redmine OpenAPI Specification](https://github.com/d-yoshi/redmine-openapi) - For the comprehensive API specification
 - [Redmine](https://www.redmine.org/) - The flexible project management web application
-
-## Developing
-
-First clone the github repository and install the dependencies:
-
-```
-git clone git@github.com:runekaagaard/mcp-redmine.git
-cd mcp-redmine
-uv sync
-```
-
-Then set this in claude_desktop_config.json:
 
 ```
 ...
