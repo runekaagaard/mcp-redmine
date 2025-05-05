@@ -167,6 +167,20 @@ Please mark issue #123 as "In Progress" and add a comment: "I've started working
 Log 3.5 hours against issue #456 for "Implementing user authentication" done today.
 ```
 
+## MCP Directory Listings
+
+MCP Redmine is listed in the following MCP directory sites and repositories:
+
+- [MCP.so](https://mcp.so/server/mcp-redmine)
+- [Glama](https://glama.ai/mcp/servers/@runekaagaard/mcp-redmine)
+
+## My Other LLM Projects
+
+- **[MCP Alchemy](https://github.com/runekaagaard/mcp-alchemy)** - Connect Claude Desktop to databases for exploring schema and running SQL.
+- **[MCP Notmuch Sendmail](https://github.com/runekaagaard/mcp-notmuch-sendmail)** - Email assistant for Claude Desktop using notmuch.
+- **[Diffpilot](https://github.com/runekaagaard/diffpilot)** - Multi-column git diff viewer with file grouping and tagging.
+- **[Claude Local Files](https://github.com/runekaagaard/claude-local-files)** - Access local files in Claude Desktop artifacts.
+
 ## Contributing
 
 Contributions are warmly welcomed! Whether it's bug reports, feature requests, documentation improvements, or code contributions - all input is valuable. Feel free to:
@@ -208,10 +222,3 @@ Then set this in claude_desktop_config.json:
 ## License
 
 Mozilla Public License Version 2.0
-
-## My Other LLM Projects
-
-- **[MCP Alchemy](https://github.com/runekaagaard/mcp-alchemy)** - Connect Claude Desktop to databases for exploring schema and running SQL.
-- **[MCP Notmuch Sendmail](https://github.com/runekaagaard/mcp-notmuch-sendmail)** - Email assistant for Claude Desktop using notmuch.
-- **[Diffpilot](https://github.com/runekaagaard/diffpilot)** - Multi-column git diff viewer with file grouping and tagging.
-- **[Claude Local Files](https://github.com/runekaagaard/claude-local-files)** - Access local files in Claude Desktop artifacts.
