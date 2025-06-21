@@ -19,11 +19,27 @@ Uses httpx for API requests and integrates with the Redmine OpenAPI specificatio
 
 ## Installation
 
-Ensure you have uv installed:
+Ensure you have uv installed. 
 ```bash
-# Install uv if you haven't already
-curl -LsSf https://astral.sh/uv/install.sh | sh
+uv --version
 ```
+
+Install uv if you haven't already.
+
+- Linux
+  ```bash
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
+
+- macOS
+  ```zsh
+  brew install uv
+  ```
+
+- windows
+  ```powershell
+  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+  ```
 
 ## Usage with Claude Desktop
 
