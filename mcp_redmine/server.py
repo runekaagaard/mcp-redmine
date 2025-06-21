@@ -9,19 +9,23 @@ from mcp.server.fastmcp.utilities.logging import get_logger
 
 VERSION = "2025.04.09.153531"
 
+# Load OpenAPI spec
+current_dir = pathlib.Path(__file__).parent
+with open(current_dir / 'redmine_openapi.yml') as f:
+    SPEC = yaml.safe_load(f)
+
 # Constants from environment
 REDMINE_URL = os.environ['REDMINE_URL']
 REDMINE_API_KEY = os.environ['REDMINE_API_KEY']
 if "REDMINE_REQUEST_INSTRUCTIONS" in os.environ:
     with open(os.environ["REDMINE_REQUEST_INSTRUCTIONS"]) as f:
         REDMINE_REQUEST_INSTRUCTIONS = f.read()
+elif os.path.exists(current_dir.parent / "INSTRUCTIONS.md"):
+    with open(current_dir.parent / "INSTRUCTIONS.md") as f:
+        REDMINE_REQUEST_INSTRUCTIONS = f.read()
 else:
     REDMINE_REQUEST_INSTRUCTIONS = ""
 
-# Load OpenAPI spec
-current_dir = pathlib.Path(__file__).parent
-with open(current_dir / 'redmine_openapi.yml') as f:
-    SPEC = yaml.safe_load(f)
 
 # Core
 def request(path: str, method: str = 'get', data: dict = None, params: dict = None,
