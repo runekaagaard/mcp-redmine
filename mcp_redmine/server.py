@@ -27,7 +27,7 @@ with open(current_dir / 'redmine_openapi.yml') as f:
 def request(path: str, method: str = 'get', data: dict = None, params: dict = None,
             content_type: str = 'application/json', content: bytes = None) -> dict:
     headers = {'X-Redmine-API-Key': REDMINE_API_KEY, 'Content-Type': content_type}
-    url = urljoin(REDMINE_URL, path)
+    url = urljoin(REDMINE_URL, path.lstrip('/'))
 
     try:
         response = httpx.request(method=method.lower(), url=url, json=data, params=params, headers=headers,
