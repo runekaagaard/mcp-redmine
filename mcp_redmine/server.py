@@ -20,9 +20,6 @@ REDMINE_API_KEY = os.environ['REDMINE_API_KEY']
 if "REDMINE_REQUEST_INSTRUCTIONS" in os.environ:
     with open(os.environ["REDMINE_REQUEST_INSTRUCTIONS"]) as f:
         REDMINE_REQUEST_INSTRUCTIONS = f.read()
-elif os.path.exists(current_dir.parent / "INSTRUCTIONS.md"):
-    with open(current_dir.parent / "INSTRUCTIONS.md") as f:
-        REDMINE_REQUEST_INSTRUCTIONS = f.read()
 else:
     REDMINE_REQUEST_INSTRUCTIONS = ""
 

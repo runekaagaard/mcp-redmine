@@ -108,8 +108,6 @@ Add to your `claude_desktop_config.json`:
 
 > **Note**: When running via Docker, the `REDMINE_REQUEST_INSTRUCTIONS` environment variable must point to a **path inside the container**, not a path on the host machine.  
 > Therefore, if you want to use a local file, you need to **mount it into the container** at the correct location.
->
-> If `REDMINE_REQUEST_INSTRUCTIONS` is not set, the server will try to load the file from the default path: `/app/INSTRUCTIONS.md` inside the container.
 
 
 ## Getting Your Redmine API Key
