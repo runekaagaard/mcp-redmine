@@ -1,4 +1,4 @@
-import os, yaml, pathlib
+import os, yaml, pathlib, json
 from urllib.parse import urljoin
 
 import httpx
@@ -12,6 +12,7 @@ VERSION = "2025.04.09.153531"
 # Constants from environment
 REDMINE_URL = os.environ['REDMINE_URL']
 REDMINE_API_KEY = os.environ['REDMINE_API_KEY']
+RESPONSE_FORMAT = os.environ.get('RESPONSE_FORMAT', 'yaml').lower()
 if "REDMINE_REQUEST_INSTRUCTIONS" in os.environ:
     with open(os.environ["REDMINE_REQUEST_INSTRUCTIONS"]) as f:
         REDMINE_REQUEST_INSTRUCTIONS = f.read()
@@ -22,6 +23,23 @@ else:
 current_dir = pathlib.Path(__file__).parent
 with open(current_dir / 'redmine_openapi.yml') as f:
     SPEC = yaml.safe_load(f)
+
+# Format response function
+def format_response(data):
+    """
+    Format response data based on RESPONSE_FORMAT environment variable.
+    Supports 'yaml' (default) and 'json' formats.
+    
+    Args:
+        data: The data to format
+        
+    Returns:
+        str: Formatted string representation of the data
+    """
+    if RESPONSE_FORMAT == 'json':
+        return json.dumps(data, indent=2, default=str)
+    else:
+        return yaml.dump(data)
 
 # Core
 def request(path: str, method: str = 'get', data: dict = None, params: dict = None,
@@ -72,11 +90,11 @@ Args:
     params: Dictionary for query parameters
 
 Returns:
-    str: YAML string containing response status code, body and error message
+    str: Formatted string containing response status code, body and error message
 
 {}""".format(REDMINE_REQUEST_INSTRUCTIONS).strip())
 def redmine_request(path: str, method: str = 'get', data: dict = None, params: dict = None) -> str:
-    return yaml.dump(request(path, method=method, data=data, params=params))
+    return format_response(request(path, method=method, data=data, params=params))
 
 @mcp.tool()
 def redmine_paths_list() -> str:
@@ -86,9 +104,9 @@ def redmine_paths_list() -> str:
     redmine_paths_info tool to get the full specfication for a path.
     
     Returns:
-        str: YAML string containing a list of path templates (e.g. '/issues.json')
+        str: Formatted string containing a list of path templates (e.g. '/issues.json')
     """
-    return yaml.dump(list(SPEC['paths'].keys()))
+    return format_response(list(SPEC['paths'].keys()))
 
 @mcp.tool()
 def redmine_paths_info(path_templates: list) -> str:
@@ -98,14 +116,14 @@ def redmine_paths_info(path_templates: list) -> str:
         path_templates: List of path templates (e.g. ['/issues.json', '/projects.json'])
         
     Returns:
-        str: YAML string containing API specifications for the requested paths
+        str: Formatted string containing API specifications for the requested paths
     """
     info = {}
     for path in path_templates:
         if path in SPEC['paths']:
             info[path] = SPEC['paths'][path]
 
-    return yaml.dump(info)
+    return format_response(info)
 
 @mcp.tool()
 def redmine_upload(file_path: str, description: str = None) -> str:
@@ -117,7 +135,7 @@ def redmine_upload(file_path: str, description: str = None) -> str:
         description: Optional description for the file
         
     Returns:
-        str: YAML string containing response status code, body and error message
+        str: Formatted string containing response status code, body and error message
              The body contains the attachment token
     """
     try:
@@ -134,9 +152,9 @@ def redmine_upload(file_path: str, description: str = None) -> str:
 
         result = request(path='uploads.json', method='post', params=params,
                          content_type='application/octet-stream', content=file_content)
-        return yaml.dump(result)
+        return format_response(result)
     except Exception as e:
-        return yaml.dump({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
+        return format_response({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
 
 @mcp.tool()
 def redmine_download(attachment_id: int, save_path: str, filename: str = None) -> str:
@@ -150,7 +168,7 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
                  will be determined from attachment data or URL
         
     Returns:
-        str: YAML string containing download status, file path, and any error messages
+        str: Formatted string containing download status, file path, and any error messages
     """
     try:
         path = pathlib.Path(save_path).expanduser()
@@ -160,21 +178,21 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
         if not filename:
             attachment_response = request(f"attachments/{attachment_id}.json", "get")
             if attachment_response["status_code"] != 200:
-                return yaml.dump(attachment_response)
+                return format_response(attachment_response)
 
             filename = attachment_response["body"]["attachment"]["filename"]
 
         response = request(f"attachments/download/{attachment_id}/{filename}", "get",
                            content_type="application/octet-stream")
         if response["status_code"] != 200 or not response["body"]:
-            return yaml.dump(response)
+            return format_response(response)
 
         with open(path, 'wb') as f:
             f.write(response["body"])
 
-        return yaml.dump({"status_code": 200, "body": {"saved_to": str(path), "filename": filename}, "error": ""})
+        return format_response({"status_code": 200, "body": {"saved_to": str(path), "filename": filename}, "error": ""})
     except Exception as e:
-        return yaml.dump({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
+        return format_response({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
 
 def main():
     """Main entry point for the mcp-redmine package."""
