@@ -5,6 +5,11 @@ import httpx
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.utilities.logging import get_logger
 
+# Import filtering capabilities
+from .response_filters import apply_response_filter
+from .mcp_capabilities import get_mcp_capabilities
+from .filter_presets import apply_preset
+
 ### Constants ###
 
 VERSION = "2025.07.09.120802"
@@ -71,13 +76,32 @@ Args:
     method: HTTP method to use (default: 'get')
     data: Dictionary for request body (for POST/PUT)
     params: Dictionary for query parameters
+    mcp_filter: Optional MCP response filtering (use redmine_paths_info to discover options)
 
 Returns:
     str: YAML string containing response status code, body and error message
 
 {}""".format(REDMINE_REQUEST_INSTRUCTIONS).strip())
-def redmine_request(path: str, method: str = 'get', data: dict = None, params: dict = None) -> str:
-    return yaml.dump(request(path, method=method, data=data, params=params))
+def redmine_request(path: str, method: str = 'get', data: dict = None, params: dict = None, mcp_filter = None) -> str:
+    # Make the standard Redmine API request
+    response = request(path, method=method, data=data, params=params)
+    
+    # Apply MCP filtering if requested
+    if mcp_filter is not None:
+        try:
+            # Handle preset filters (string values)
+            if isinstance(mcp_filter, str):
+                mcp_filter = apply_preset(mcp_filter)
+            
+            # Apply filtering to the response
+            response = apply_response_filter(response, mcp_filter)
+            
+        except Exception:
+            # On any filtering error, return original response
+            # This ensures backward compatibility and robustness
+            pass
+    
+    return yaml.dump(response)
 
 @mcp.tool()
 def redmine_paths_list() -> str:
@@ -93,19 +117,26 @@ def redmine_paths_list() -> str:
 
 @mcp.tool()
 def redmine_paths_info(path_templates: list) -> str:
-    """Get full path information for given path templates
+    """Get full path information including MCP capabilities
+    
+    Returns both native Redmine API specifications AND available MCP server
+    capabilities for response processing.
     
     Args:
         path_templates: List of path templates (e.g. ['/issues.json', '/projects.json'])
         
     Returns:
-        str: YAML string containing API specifications for the requested paths
+        str: YAML string containing API specifications and MCP capabilities
     """
     info = {}
     for path in path_templates:
         if path in SPEC['paths']:
-            info[path] = SPEC['paths'][path]
-
+            # Include both native Redmine API spec and MCP capabilities
+            info[path] = {
+                'redmine_api': SPEC['paths'][path],
+                'mcp_capabilities': get_mcp_capabilities(path)
+            }
+    
     return yaml.dump(info)
 
 @mcp.tool()
