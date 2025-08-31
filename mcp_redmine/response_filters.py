@@ -105,9 +105,14 @@ def filter_dict(data: dict, config: FilterConfig) -> dict:
                     filtered[key] = filtered_custom_fields
                 continue
                 
-        # Apply include/exclude field filtering
-        if config.include_fields and key not in config.include_fields:
-            continue
+        # Apply include/exclude field filtering, but handle Redmine response structure
+        if config.include_fields:
+            # Special handling for Redmine response structure
+            if key in ["issue", "issues", "projects", "users", "time_entries"]:
+                # These are Redmine wrapper keys - always include them and apply filtering to their contents
+                pass
+            elif key not in config.include_fields:
+                continue
         if config.exclude_fields and key in config.exclude_fields:
             continue
             
