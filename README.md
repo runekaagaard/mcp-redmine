@@ -153,6 +153,7 @@ Add to your `claude_desktop_config.json`:
     - `method` (string, optional): HTTP method to use (default: 'get')
     - `data` (object, optional): Dictionary for request body (for POST/PUT)
     - `params` (object, optional): Dictionary for query parameters
+    - `mcp_filter` (object, optional): MCP response filtering (use redmine_paths_info to discover options)
   - Returns YAML string containing response status code, body and error message:
   ```yaml
   status_code: 200
@@ -223,6 +224,16 @@ Please mark issue #123 as "In Progress" and add a comment: "I've started working
 
 ```
 Log 3.5 hours against issue #456 for "Implementing user authentication" done today.
+```
+
+### Using Response Filtering (New)
+
+```
+Get issues with reduced verbosity:
+redmine_request("/issues.json", params={"limit": 5}, mcp_filter={"remove_empty": True, "remove_custom_fields": True})
+
+Use preset for clean responses:
+redmine_request("/issues.json", mcp_filter="clean")
 ```
 
 ## MCP Directory Listings

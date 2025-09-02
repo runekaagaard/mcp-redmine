@@ -49,3 +49,13 @@ package-run-test:
 
 package-run-prod:
 	uvx --from mcp-redmine mcp-redmine
+
+test:
+	uv run --group dev pytest tests/ -v
+
+test-coverage:
+	uv run --group dev pytest tests/ --cov=mcp_redmine --cov-report=html --cov-report=term
+
+test-install:
+	uv sync --group dev
+	$(MAKE) test
