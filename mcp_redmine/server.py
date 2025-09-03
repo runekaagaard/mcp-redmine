@@ -58,6 +58,11 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
                 body = None
 
         return {"status_code": status_code, "body": body, "error": f"{e.__class__.__name__}: {e}"}
+        
+def yd(obj):
+    # Allow direct Unicode output, prevent line wrapping for long lines, and avoid automatic key sorting.
+    return yaml.safe_dump(obj, allow_unicode=True, sort_keys=False, width=4096)
+
 
 # Tools
 mcp = FastMCP("Redmine MCP server")
@@ -76,8 +81,9 @@ Returns:
     str: YAML string containing response status code, body and error message
 
 {}""".format(REDMINE_REQUEST_INSTRUCTIONS).strip())
+    
 def redmine_request(path: str, method: str = 'get', data: dict = None, params: dict = None) -> str:
-    return yaml.dump(request(path, method=method, data=data, params=params))
+    return yd(request(path, method=method, data=data, params=params))
 
 @mcp.tool()
 def redmine_paths_list() -> str:
@@ -89,7 +95,7 @@ def redmine_paths_list() -> str:
     Returns:
         str: YAML string containing a list of path templates (e.g. '/issues.json')
     """
-    return yaml.dump(list(SPEC['paths'].keys()))
+    return yd(list(SPEC['paths'].keys()))
 
 @mcp.tool()
 def redmine_paths_info(path_templates: list) -> str:
@@ -106,7 +112,7 @@ def redmine_paths_info(path_templates: list) -> str:
         if path in SPEC['paths']:
             info[path] = SPEC['paths'][path]
 
-    return yaml.dump(info)
+    return yd(info)
 
 @mcp.tool()
 def redmine_upload(file_path: str, description: str = None) -> str:
@@ -135,9 +141,9 @@ def redmine_upload(file_path: str, description: str = None) -> str:
 
         result = request(path='uploads.json', method='post', params=params,
                          content_type='application/octet-stream', content=file_content)
-        return yaml.dump(result)
+        return yd(result)
     except Exception as e:
-        return yaml.dump({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
+        return yd({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
 
 @mcp.tool()
 def redmine_download(attachment_id: int, save_path: str, filename: str = None) -> str:
@@ -161,21 +167,21 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
         if not filename:
             attachment_response = request(f"attachments/{attachment_id}.json", "get")
             if attachment_response["status_code"] != 200:
-                return yaml.dump(attachment_response)
+                return yd(attachment_response)
 
             filename = attachment_response["body"]["attachment"]["filename"]
 
         response = request(f"attachments/download/{attachment_id}/{filename}", "get",
                            content_type="application/octet-stream")
         if response["status_code"] != 200 or not response["body"]:
-            return yaml.dump(response)
+            return yd(response)
 
         with open(path, 'wb') as f:
             f.write(response["body"])
 
-        return yaml.dump({"status_code": 200, "body": {"saved_to": str(path), "filename": filename}, "error": ""})
+        return yd({"status_code": 200, "body": {"saved_to": str(path), "filename": filename}, "error": ""})
     except Exception as e:
-        return yaml.dump({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
+        return yd({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
 
 def main():
     """Main entry point for the mcp-redmine package."""
