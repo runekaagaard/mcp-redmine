@@ -1,6 +1,8 @@
-# MCP Redmine
+# MCP Redmine (Active Fork)
 
 **Status: Works great and is in daily use without any known bugs.**
+
+**Fork Notice: This is an active fork of [runekaagaard/mcp-redmine](https://github.com/runekaagaard/mcp-redmine) maintained to ensure stability and availability when upstream development is limited.**
 
 **Status2: I just added the package to PyPI and updated the usage instructions. Please report any issues :)**
 
@@ -49,7 +51,7 @@ Add to your `claude_desktop_config.json`:
     "mcpServers": {
       "redmine": {
         "command": "uvx",
-        "args": ["--from", "mcp-redmine==2025.07.09.120802", 
+        "args": ["--from", "mcp-redmine==2025.7.9.post0",
                 "--refresh-package", "mcp-redmine", "mcp-redmine"],
         "env": {
           "REDMINE_URL": "https://your-redmine-instance.example.com",
