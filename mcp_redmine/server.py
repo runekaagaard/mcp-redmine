@@ -1,5 +1,6 @@
 import os, yaml, pathlib
 from urllib.parse import urljoin
+import importlib
 
 import httpx
 from mcp.server.fastmcp import FastMCP
@@ -22,7 +23,7 @@ if "REDMINE_REQUEST_INSTRUCTIONS" in os.environ:
         REDMINE_REQUEST_INSTRUCTIONS = f.read()
 else:
     REDMINE_REQUEST_INSTRUCTIONS = ""
-
+REDMINE_PLUGINS = [x for x in os.environ.get("REDMINE_PLUGINS", "").split(",") if x]
 
 # Core
 def request(path: str, method: str = 'get', data: dict = None, params: dict = None,
@@ -58,17 +59,30 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
                 body = None
 
         return {"status_code": status_code, "body": body, "error": f"{e.__class__.__name__}: {e}"}
-        
+
 def yd(obj):
     # Allow direct Unicode output, prevent line wrapping for long lines, and avoid automatic key sorting.
     return yaml.safe_dump(obj, allow_unicode=True, sort_keys=False, width=4096)
 
+def pluggable_tool(mcp, *args, **kwargs):
+    def _(fn):
+        nonlocal args, kwargs
+
+        for plugin_import_path in REDMINE_PLUGINS:
+            plugin = importlib.import_module(plugin_import_path)
+            if plugin_fn := getattr(plugin, fn.__name__, None):
+                fn, args, kwargs = plugin_fn(fn, args, kwargs)
+
+        mcp.add_tool(fn, *args, **kwargs)
+        return fn
+
+    return _
 
 # Tools
 mcp = FastMCP("Redmine MCP server")
 get_logger(__name__).info(f"Starting MCP Redmine version {VERSION}")
 
-@mcp.tool(description="""
+@pluggable_tool(mcp, description="""
 Make a request to the Redmine API
 
 Args:
@@ -81,11 +95,10 @@ Returns:
     str: YAML string containing response status code, body and error message
 
 {}""".format(REDMINE_REQUEST_INSTRUCTIONS).strip())
-    
 def redmine_request(path: str, method: str = 'get', data: dict = None, params: dict = None) -> str:
     return yd(request(path, method=method, data=data, params=params))
 
-@mcp.tool()
+@pluggable_tool(mcp)
 def redmine_paths_list() -> str:
     """Return a list of available API paths from OpenAPI spec
     
@@ -97,7 +110,7 @@ def redmine_paths_list() -> str:
     """
     return yd(list(SPEC['paths'].keys()))
 
-@mcp.tool()
+@pluggable_tool(mcp)
 def redmine_paths_info(path_templates: list) -> str:
     """Get full path information for given path templates
     
@@ -114,7 +127,7 @@ def redmine_paths_info(path_templates: list) -> str:
 
     return yd(info)
 
-@mcp.tool()
+@pluggable_tool(mcp)
 def redmine_upload(file_path: str, description: str = None) -> str:
     """
     Upload a file to Redmine and get a token for attachment

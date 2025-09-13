@@ -105,6 +105,7 @@ Add to your `claude_desktop_config.json`:
 - `REDMINE_URL`: URL of your Redmine instance (required)
 - `REDMINE_API_KEY`: Your Redmine API key (required, see below for how to get it)
 - `REDMINE_REQUEST_INSTRUCTIONS`: Path to a file containing additional instructions for the redmine_request tool (optional). I've found it works great to have the LLM generate that file after a session. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md))
+- `REDMINE_PLUGINS`: Comma-separated list of Python import paths for plugins to load (optional). See `mcp_redmine/plugins/example.py` for plugin development.
 
 > **Note**: When running via Docker, the `REDMINE_REQUEST_INSTRUCTIONS` environment variable must point to a **path inside the container**, not a path on the host machine.  
 > Therefore, if you want to use a local file, you need to **mount it into the container** at the correct location.
