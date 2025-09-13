@@ -43,4 +43,6 @@ package = true
 dev = [
     "build>=1.2.2.post1",
     "hatchling>=1.27.0",
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
 ]
