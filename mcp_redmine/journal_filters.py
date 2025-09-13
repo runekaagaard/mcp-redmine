@@ -97,22 +97,10 @@ class GerritPatternMatcher:
         textile_matches = sum(1 for pattern in self._compiled_patterns['textile'] 
                             if pattern.search(text))
         
-        # Require multiple indicators for secondary pattern matching
+        # Require multiple indicators across distinct groups to reduce false positives
         total_indicators = secondary_matches + url_matches + commit_matches + textile_matches
-        
-        # If we have URL patterns, that's a strong indicator
-        if url_matches > 0 and total_indicators >= 2:
-            return True
-        
-        # If we have commit patterns with other indicators
-        if commit_matches > 0 and total_indicators >= 2:
-            return True
-        
-        # If we have textile patterns with other indicators
-        if textile_matches > 0 and total_indicators >= 2:
-            return True
-        
-        return False
+        present_groups = sum(1 for n in (secondary_matches, url_matches, commit_matches, textile_matches) if n > 0)
+        return present_groups >= 2 and total_indicators >= 2
     
     def parse_textile_markup(self, text: str) -> Dict[str, Any]:
         """
@@ -303,13 +291,15 @@ class JournalFilterDetector:
             return False
         
         for detail in details:
-            property_name = detail.get('property', '')
-            name = detail.get('name', '')
+            if not isinstance(detail, dict):
+                continue
+            property_name = str(detail.get('property') or '')
+            name = str(detail.get('name') or '')
             
             # Check for custom field changes that might be code review related
             if property_name == 'cf':  # Custom field
                 # Custom fields with code review-related names
-                if any(keyword in name.lower() for keyword in 
+                if any(keyword in name.lower() for keyword in
                        ['review', 'commit', 'merge', 'approval', 'gerrit']):
                     return True
         

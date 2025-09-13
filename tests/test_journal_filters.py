@@ -225,11 +225,16 @@ class TestGerritPatternMatcher:
             result = self.matcher.is_gerrit_entry(text)
             assert result is False, f"Should not match single indicator: {text}"
         
-        # Special case: Commit patterns can match twice (format + standalone SHA)
-        # This WILL match because it has 2 commit pattern matches
+        # Special case: With cross-group requirement, need patterns from different groups
+        # This should NOT match because both are from the same commit group
         commit_double_match = "Commit: abc123def456789012345678901234567890abcd only"
         result = self.matcher.is_gerrit_entry(commit_double_match)
-        assert result is True, f"Should match due to double commit pattern match: {commit_double_match}"
+        assert result is False, f"Should not match due to same-group patterns: {commit_double_match}"
+        
+        # But this SHOULD match because it has patterns from different groups
+        cross_group_match = "Gerrit review abc123def456789012345678901234567890abcd"
+        result = self.matcher.is_gerrit_entry(cross_group_match)
+        assert result is True, f"Should match due to cross-group patterns: {cross_group_match}"
     
     def test_negative_tests_prevent_false_positives_non_gerrit_entries(self):
         """Add negative tests to prevent false positives with non-Gerrit entries."""
