@@ -9,6 +9,7 @@ YAML structure as the original Redmine API responses.
 from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass
 import copy
+import re
 from mcp.server.fastmcp.utilities.logging import get_logger
 
 # Import journal filtering capabilities
@@ -71,14 +72,25 @@ def validate_filter_config(mcp_filter: dict) -> List[str]:
     if "include_fields" in mcp_filter:
         if not isinstance(mcp_filter["include_fields"], list):
             errors.append("include_fields must be a list of strings")
+        elif not all(isinstance(x, str) for x in mcp_filter["include_fields"]):
+            errors.append("include_fields list items must be strings")
     
     if "exclude_fields" in mcp_filter:
         if not isinstance(mcp_filter["exclude_fields"], list):
             errors.append("exclude_fields must be a list of strings")
+        elif not all(isinstance(x, str) for x in mcp_filter["exclude_fields"]):
+            errors.append("exclude_fields list items must be strings")
     
     if "keep_custom_fields" in mcp_filter:
         if not isinstance(mcp_filter["keep_custom_fields"], list):
             errors.append("keep_custom_fields must be a list of strings")
+        elif not all(isinstance(x, str) for x in mcp_filter["keep_custom_fields"]):
+            errors.append("keep_custom_fields list items must be strings")
+    
+    # Validate boolean options
+    for key in ("remove_empty", "remove_custom_fields"):
+        if key in mcp_filter and not isinstance(mcp_filter[key], bool):
+            errors.append(f"{key} must be a boolean value")
     
     return errors
 
@@ -186,37 +198,37 @@ def filter_dict(data: dict, config: FilterConfig) -> dict:
                     filtered[key] = filtered_custom_fields
                 continue
         
-        # Handle journals filtering specially - runs after field exclusion
+        # Apply include/exclude field filtering, but handle Redmine response structure
+        if config.include_fields:
+            # Always include wrapper keys and filter their contents
+            if key in ["issue", "issues", "projects", "users", "time_entries"]:
+                pass
+            elif key not in config.include_fields:
+                continue
+        # include_fields overrides exclude_fields by design
+        if (not config.include_fields) and config.exclude_fields and key in config.exclude_fields:
+            continue
+
+        # Handle journals filtering after field exclusion rules
         if key == "journals" and isinstance(value, list) and config.journals:
             try:
                 processor = JournalFilterProcessor()
                 filtered_journals = processor.filter_journals(value, config.journals)
                 filtered[key] = filtered_journals
-            except Exception as e:
-                # Log warning and return unfiltered journals if processing fails
+            except (re.error, TypeError, AttributeError, KeyError) as e:
                 logger.warning(f"Journal filtering failed, returning unfiltered journals: {e}")
                 filtered[key] = value
+            continue
+        
+        # Handle description field truncation
+        if (key in ["description", "notes", "text"] and
+            isinstance(value, str) and
+            config.max_description_length and
+            len(value) > config.max_description_length):
+            filtered[key] = value[:config.max_description_length] + "... [truncated]"
         else:
-            # Apply include/exclude field filtering, but handle Redmine response structure
-            if config.include_fields:
-                # Special handling for Redmine response structure
-                if key in ["issue", "issues", "projects", "users", "time_entries"]:
-                    # These are Redmine wrapper keys - always include them and apply filtering to their contents
-                    pass
-                elif key not in config.include_fields:
-                    continue
-            if config.exclude_fields and key in config.exclude_fields:
-                continue
-                
-            # Handle description field truncation
-            if (key in ["description", "notes", "text"] and 
-                isinstance(value, str) and 
-                config.max_description_length and 
-                len(value) > config.max_description_length):
-                filtered[key] = value[:config.max_description_length] + "... [truncated]"
-            else:
-                # Recursively filter nested data
-                filtered[key] = filter_data(value, config)
+            # Recursively filter nested data
+            filtered[key] = filter_data(value, config)
     
     return filtered
 

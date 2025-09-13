@@ -6,7 +6,7 @@ journal entries from Redmine issues, specifically focusing on Gerrit integration
 """
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, ClassVar, Tuple
 from dataclasses import dataclass
 from mcp.server.fastmcp.utilities.logging import get_logger
 
@@ -28,36 +28,36 @@ class GerritPatternMatcher:
     """
     
     # Primary patterns - most reliable identifiers
-    PRIMARY_PATTERNS = [
+    PRIMARY_PATTERNS: ClassVar[Tuple[str, ...]] = (
         r"\*Gerrit change\* submitted",  # Most reliable identifier
-    ]
+    )
     
     # Secondary patterns - additional Gerrit indicators
-    SECONDARY_PATTERNS = [
+    SECONDARY_PATTERNS: ClassVar[Tuple[str, ...]] = (
         r"\*\(Gerrit review\)\*",        # Appears in link text
         r"Gerrit change",                # Fallback pattern
         r"Gerrit review",                # Fallback pattern
-    ]
+    )
     
     # URL patterns for Gerrit change URLs
-    URL_PATTERNS = [
-        r"http://.*gerrit.*/r/c/\d+",    # Full Gerrit URL pattern
+    URL_PATTERNS: ClassVar[Tuple[str, ...]] = (
+        r"https?://[^\s]*gerrit[^\s]*/r/c/\d+(?:/\d+)?",  # Secure Gerrit URL pattern
         r"/r/c/\d+/\d+",                 # Gerrit change/patchset pattern
         r"/r/c/\d+",                     # Gerrit change pattern
-    ]
+    )
     
     # Commit and reference patterns
-    COMMIT_PATTERNS = [
-        r"Commit:\s*[a-f0-9]{40}",       # Full commit SHA
+    COMMIT_PATTERNS: ClassVar[Tuple[str, ...]] = (
+        r"Commit:\s*\b[a-f0-9]{40}\b",   # Full commit SHA with word boundaries
         r"Issue\s*#\d+:",                # Issue reference in Gerrit context
-        r"[a-f0-9]{40}",                 # Standalone commit SHA
-    ]
+        r"\b[a-f0-9]{40}\b",             # Standalone commit SHA with word boundaries
+    )
     
     # Textile markup patterns specific to Gerrit entries
-    TEXTILE_PATTERNS = [
-        r"\*\".*\"\:http://.*gerrit.*",   # Textile link to Gerrit
+    TEXTILE_PATTERNS: ClassVar[Tuple[str, ...]] = (
+        r'\*"[^"]*":https?://[^\s]*gerrit[^\s]*',  # Textile link to Gerrit (secure)
         r"p\(\(\(\.\s*\*Issue\s*#\d+:",  # Textile paragraph with issue ref
-    ]
+    )
     
     def __init__(self):
         """Initialize the pattern matcher with compiled regex patterns."""
@@ -359,13 +359,10 @@ class JournalFilterProcessor:
                     # Strip details field to remove old_value/new_value noise
                     cleaned_journal = self._strip_details_field(journal)
                     filtered_journals.append(cleaned_journal)
-            except Exception as e:
+            except (re.error, TypeError, AttributeError, KeyError) as e:
                 # Log warning for pattern matching errors but continue processing
                 # This ensures robustness and prevents filtering failures
-                try:
-                    journal_id = journal.get('id', 'unknown') if isinstance(journal, dict) else 'invalid'
-                except:
-                    journal_id = 'invalid'
+                journal_id = journal.get('id', 'unknown') if isinstance(journal, dict) else 'invalid'
                 logger.warning(f"Journal filtering error for journal {journal_id}: {e}")
                 continue
         
@@ -383,12 +380,9 @@ class JournalFilterProcessor:
         """
         try:
             return self.detector.is_code_review_entry(journal_entry)
-        except Exception as e:
+        except (re.error, TypeError, AttributeError, KeyError) as e:
             # Log warning for pattern matching errors and exclude the entry to be safe
-            try:
-                journal_id = journal_entry.get('id', 'unknown') if isinstance(journal_entry, dict) else 'invalid'
-            except:
-                journal_id = 'invalid'
+            journal_id = journal_entry.get('id', 'unknown') if isinstance(journal_entry, dict) else 'invalid'
             logger.warning(f"Pattern matching error for journal {journal_id}: {e}")
             return False
     
@@ -415,12 +409,9 @@ class JournalFilterProcessor:
             
             # Notes content must match code review patterns
             return self.detector.contains_code_review_patterns(notes)
-        except Exception as e:
+        except (re.error, TypeError, AttributeError, KeyError) as e:
             # Log warning for pattern matching errors and exclude the entry to be safe
-            try:
-                journal_id = journal_entry.get('id', 'unknown') if isinstance(journal_entry, dict) else 'invalid'
-            except:
-                journal_id = 'invalid'
+            journal_id = journal_entry.get('id', 'unknown') if isinstance(journal_entry, dict) else 'invalid'
             logger.warning(f"Pattern matching error for journal {journal_id}: {e}")
             return False
     
@@ -492,6 +483,6 @@ def should_include_journal(journal_entry: Dict[str, Any]) -> bool:
         
         # Notes content must match code review patterns
         return detector.contains_code_review_patterns(notes)
-    except Exception:
+    except (re.error, TypeError, AttributeError, KeyError):
         # On any error, exclude the entry to be safe
         return False

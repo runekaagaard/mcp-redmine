@@ -110,7 +110,7 @@ class TestGerritPatternMatcher:
         
         # Cases that DO match due to multiple indicators (expected behavior)
         expected_matches = [
-            "http://gerrit.example.com/r/c/12345",  # "gerrit" matches secondary + URL matches
+            "Gerrit review: http://gerrit.example.com/r/c/12345",  # secondary ("Gerrit review") + URL
         ]
         
         for text in expected_matches:
@@ -123,7 +123,7 @@ class TestGerritPatternMatcher:
         # - "/r/c/54321/1" matches URL pattern "/r/c/\d+/\d+"
         # This is expected behavior due to permissive regex matching
         overlapping_cases = [
-            "Review at /r/c/54321/1",  # "review" + URL pattern
+            "Gerrit review at /r/c/54321/1",  # secondary + URL pattern
         ]
         
         for text in overlapping_cases:
@@ -200,10 +200,10 @@ class TestGerritPatternMatcher:
             assert result is False, f"Should not match invalid commit SHA: {text}"
         
         # Test edge case: long string with valid 40-char hex substring
-        # This WILL match because the regex finds valid 40-char hex within it
+        # This should NOT match because word boundaries prevent partial matches
         long_with_valid_hex = "Gerrit review\nCommit: 123456789012345678901234567890123456789012345"
         result = self.matcher.is_gerrit_entry(long_with_valid_hex)
-        assert result is True, f"Should match because contains valid 40-char hex substring: {long_with_valid_hex}"
+        assert result is False, f"Should not match due to word boundaries preventing partial matches: {long_with_valid_hex}"
         
         # Test valid commit SHAs that should match
         valid_commit_cases = [
@@ -727,7 +727,7 @@ class TestJournalFilterProcessor:
         # Test should_include_journal error handling with a problematic entry
         problematic_journal = {"id": 1, "notes": None}
         
-        with patch.object(processor.detector, 'is_code_review_entry', side_effect=Exception("Test error")):
+        with patch.object(processor.detector, 'is_code_review_entry', side_effect=TypeError("Test error")):
             with patch('mcp_redmine.journal_filters.logger') as mock_logger:
                 result = processor.should_include_journal(problematic_journal)
                 
