@@ -176,17 +176,6 @@ def filter_dict(data: dict, config: FilterConfig) -> dict:
         if config.remove_empty and is_empty_value(value):
             continue
             
-        # Apply include/exclude field filtering, but handle Redmine response structure
-        if config.include_fields:
-            # Special handling for Redmine response structure
-            if key in ["issue", "issues", "projects", "users", "time_entries"]:
-                # These are Redmine wrapper keys - always include them and apply filtering to their contents
-                pass
-            elif key not in config.include_fields:
-                continue
-        if config.exclude_fields and key in config.exclude_fields:
-            continue
-            
         # Handle custom_fields specially
         if key == "custom_fields" and isinstance(value, list):
             if config.remove_custom_fields:
@@ -207,17 +196,27 @@ def filter_dict(data: dict, config: FilterConfig) -> dict:
                 # Log warning and return unfiltered journals if processing fails
                 logger.warning(f"Journal filtering failed, returning unfiltered journals: {e}")
                 filtered[key] = value
-            continue
-            
-        # Handle description field truncation
-        if (key in ["description", "notes", "text"] and 
-            isinstance(value, str) and 
-            config.max_description_length and 
-            len(value) > config.max_description_length):
-            filtered[key] = value[:config.max_description_length] + "... [truncated]"
         else:
-            # Recursively filter nested data
-            filtered[key] = filter_data(value, config)
+            # Apply include/exclude field filtering, but handle Redmine response structure
+            if config.include_fields:
+                # Special handling for Redmine response structure
+                if key in ["issue", "issues", "projects", "users", "time_entries"]:
+                    # These are Redmine wrapper keys - always include them and apply filtering to their contents
+                    pass
+                elif key not in config.include_fields:
+                    continue
+            if config.exclude_fields and key in config.exclude_fields:
+                continue
+                
+            # Handle description field truncation
+            if (key in ["description", "notes", "text"] and 
+                isinstance(value, str) and 
+                config.max_description_length and 
+                len(value) > config.max_description_length):
+                filtered[key] = value[:config.max_description_length] + "... [truncated]"
+            else:
+                # Recursively filter nested data
+                filtered[key] = filter_data(value, config)
     
     return filtered
 
