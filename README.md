@@ -104,6 +104,7 @@ Add to your `claude_desktop_config.json`:
 
 - `REDMINE_URL`: URL of your Redmine instance (required)
 - `REDMINE_API_KEY`: Your Redmine API key (required, see below for how to get it)
+- `REDMINE_SSL_VERIFY`: Whether to verify SSL certificates (optional, default: `true`). Set to `false` to bypass SSL certificate verification for self-signed certificates.
 - `REDMINE_REQUEST_INSTRUCTIONS`: Path to a file containing additional instructions for the redmine_request tool (optional). I've found it works great to have the LLM generate that file after a session. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md))
 
 > **Note**: When running via Docker, the `REDMINE_REQUEST_INSTRUCTIONS` environment variable must point to a **path inside the container**, not a path on the host machine.  

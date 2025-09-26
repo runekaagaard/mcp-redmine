@@ -17,6 +17,7 @@ with open(current_dir / 'redmine_openapi.yml') as f:
 # Constants from environment
 REDMINE_URL = os.environ['REDMINE_URL']
 REDMINE_API_KEY = os.environ['REDMINE_API_KEY']
+REDMINE_SSL_VERIFY = os.environ.get('REDMINE_SSL_VERIFY', 'true').lower() in ('true', '1', 'yes', 'on')
 if "REDMINE_REQUEST_INSTRUCTIONS" in os.environ:
     with open(os.environ["REDMINE_REQUEST_INSTRUCTIONS"]) as f:
         REDMINE_REQUEST_INSTRUCTIONS = f.read()
@@ -32,7 +33,7 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
 
     try:
         response = httpx.request(method=method.lower(), url=url, json=data, params=params, headers=headers,
-                                 content=content, timeout=60.0)
+                                 content=content, timeout=60.0, verify=REDMINE_SSL_VERIFY)
         response.raise_for_status()
 
         body = None
