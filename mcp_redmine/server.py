@@ -120,7 +120,7 @@ def redmine_upload(file_path: str, description: str = None) -> str:
     Upload a file to Redmine and get a token for attachment
     
     Args:
-        file_path: Fully qualified path to the file to upload
+        file_path: Path to the file to upload (absolute or relative)
         description: Optional description for the file
         
     Returns:
@@ -128,9 +128,11 @@ def redmine_upload(file_path: str, description: str = None) -> str:
              The body contains the attachment token
     """
     try:
-        path = pathlib.Path(file_path).expanduser()
-        assert path.is_absolute(), f"Path must be fully qualified, got: {file_path}"
-        assert path.exists(), f"File does not exist: {file_path}"
+        # Normalize path separators for cross-platform compatibility (Windows client -> Linux server)
+        file_path = file_path.replace('\\', '/')
+        path = pathlib.Path(file_path).expanduser().resolve()
+        if not path.exists():
+            return yd({"status_code": 0, "body": None, "error": f"File does not exist: {file_path}"})
 
         params = {'filename': path.name}
         if description:
@@ -152,7 +154,7 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
     
     Args:
         attachment_id: The ID of the attachment to download
-        save_path: Fully qualified path where the file should be saved to
+        save_path: Path where the file should be saved to (absolute or relative)
         filename: Optional filename to use for the attachment. If not provided, 
                  will be determined from attachment data or URL
         
@@ -160,16 +162,22 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
         str: YAML string containing download status, file path, and any error messages
     """
     try:
-        path = pathlib.Path(save_path).expanduser()
-        assert path.is_absolute(), f"Path must be fully qualified, got: {save_path}"
-        assert not path.is_dir(), f"Path can't be a directory, got: {save_path}"
-
+        # Normalize path separators for cross-platform compatibility (Windows client -> Linux server)
+        save_path = save_path.replace('\\', '/')
+        path = pathlib.Path(save_path).expanduser().resolve()
+        
         if not filename:
             attachment_response = request(f"attachments/{attachment_id}.json", "get")
             if attachment_response["status_code"] != 200:
                 return yd(attachment_response)
 
             filename = attachment_response["body"]["attachment"]["filename"]
+
+        if path.is_dir() or save_path.endswith(("/", "\\")):
+            path.mkdir(parents=True, exist_ok=True)
+            path = path / filename
+        else:
+            path.parent.mkdir(parents=True, exist_ok=True)
 
         response = request(f"attachments/download/{attachment_id}/{filename}", "get",
                            content_type="application/octet-stream")
