@@ -87,13 +87,16 @@ Add to your `claude_desktop_config.json`:
             "-e", "REDMINE_URL",
             "-e", "REDMINE_API_KEY",
             "-e", "REDMINE_REQUEST_INSTRUCTIONS",
+            "-e", "CONTAINER_ASSETS_MAPPING",
             "-v", "/path/to/instructions.md:/app/INSTRUCTIONS.md",
+            "-v", "D:/your-working-folder/ai-assets/mcp-redmine-assets:/app/assets",
             "mcp-redmine"
         ],
         "env": {
           "REDMINE_URL": "https://your-redmine-instance.example.com",
           "REDMINE_API_KEY": "your-api-key",
-          "REDMINE_REQUEST_INSTRUCTIONS": "/app/INSTRUCTIONS.md"
+          "REDMINE_REQUEST_INSTRUCTIONS": "/app/INSTRUCTIONS.md",
+          "CONTAINER_ASSETS_MAPPING": "./ai-assets/mcp-redmine-assets:./assets"
         }
       }
     }
@@ -223,6 +226,18 @@ Please mark issue #123 as "In Progress" and add a comment: "I've started working
 
 ```
 Log 3.5 hours against issue #456 for "Implementing user authentication" done today.
+```
+
+### File Operations (Docker)
+
+**Download:**
+```
+Download the images from Redmine issue 789 and save them in the mcp-redmine-assets folder.
+```
+
+**Upload:**
+```
+Upload all images in the folder mcp-redmine-assets/download to the redmine 789.
 ```
 
 ## MCP Directory Listings

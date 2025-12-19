@@ -7,7 +7,7 @@ from mcp.server.fastmcp.utilities.logging import get_logger
 
 ### Constants ###
 
-VERSION = "2025.09.03.141435"
+VERSION = "2025.12.19.144900"
 
 # Load OpenAPI spec
 current_dir = pathlib.Path(__file__).parent
@@ -17,7 +17,6 @@ with open(current_dir / 'redmine_openapi.yml') as f:
 # Constants from environment
 REDMINE_URL = os.environ['REDMINE_URL']
 REDMINE_API_KEY = os.environ['REDMINE_API_KEY']
-REDMINE_ASSETS_DIR = os.getenv('REDMINE_ASSETS_DIR', 'assets')
 CONTAINER_ASSETS_MAPPING = os.getenv('CONTAINER_ASSETS_MAPPING')
 
 def _detect_docker_env() -> bool:
@@ -38,15 +37,15 @@ if CONTAINER_ASSETS_MAPPING:
         # Normalize paths for comparison (remove leading ./, replace \ with /)
         def _normalize(p):
             p = p.replace('\\', '/')
-            if p.startswith('./'): p = p[2:]
-            return p.rstrip('/')
+            # Remove all leading dots and slashes to get a clean relative path
+            return p.lstrip('./')
 
         HOST_PATH_PREFIX = _normalize(_host)
         CONTAINER_PATH_PREFIX = _normalize(_container)
     except ValueError:
-        get_logger(__name__).warning(f"Invalid CONTAINER_ASSETS_MAPPING format: '{CONTAINER_ASSETS_MAPPING}'. Expected 'host_path:container_path'. Mapping disabled.")
+        get_logger(__name__).warning(f"Invalid CONTAINER_ASSETS_MAPPING format: '{CONTAINER_ASSETS_MAPPING}'. Expected 'host_path:container_path'.")
     except Exception as e:
-        get_logger(__name__).warning(f"Error parsing CONTAINER_ASSETS_MAPPING: {e}. Mapping disabled.")
+        get_logger(__name__).warning(f"Error parsing CONTAINER_ASSETS_MAPPING: {e}")
 
 if "REDMINE_REQUEST_INSTRUCTIONS" in os.environ:
     with open(os.environ["REDMINE_REQUEST_INSTRUCTIONS"]) as f:
@@ -99,6 +98,7 @@ def map_host_to_container(file_path: str) -> str:
     Map a host path (AI view) to a container path using pre-parsed prefixes.
     """
     if not HOST_PATH_PREFIX or not CONTAINER_PATH_PREFIX:
+        # get_logger(__name__).debug(f"Mapping disabled: prefixes not set")
         return file_path
 
     try:
@@ -115,8 +115,10 @@ def map_host_to_container(file_path: str) -> str:
             # Construct new path using pathlib for safety
             new_path = pathlib.Path(CONTAINER_PATH_PREFIX) / rel_part
             
-            get_logger(__name__).info(f"Mapped path: '{file_path}' -> '{new_path}'")
+            get_logger(__name__).info(f"Mapping success: '{file_path}' (norm: '{norm_input}') -> '{new_path}'")
             return str(new_path)
+        else:
+            get_logger(__name__).info(f"Mapping skip: '{norm_input}' does not start with '{HOST_PATH_PREFIX}'")
             
     except Exception as e:
         get_logger(__name__).error(f"Path mapping failed: {e}")
@@ -127,17 +129,18 @@ def find_file_in_docker(filename: str) -> pathlib.Path | None:
     """
     Recursively search for a file by name in the assets directory.
     Only intended for use within a Docker container to resolve path mapping issues.
-    The search is restricted to the directory specified by REDMINE_ASSETS_DIR (default: 'assets').
+    Search root is determined by CONTAINER_ASSETS_MAPPING (defaulting to 'assets').
     """
     try:
-        # Search only in the configured assets directory
-        assets_dir = pathlib.Path.cwd() / REDMINE_ASSETS_DIR
+        # Determine search root: prefer mapping config, fallback to default 'assets'
+        target_dir = CONTAINER_PATH_PREFIX if CONTAINER_PATH_PREFIX else 'assets'
+        search_root = pathlib.Path.cwd() / target_dir
         
-        if not assets_dir.exists() or not assets_dir.is_dir():
+        if not search_root.exists() or not search_root.is_dir():
             return None
 
         # Using rglob to find the first match
-        match = next(assets_dir.rglob(filename), None)
+        match = next(search_root.rglob(filename), None)
         return match
     except Exception:
         return None
@@ -146,6 +149,8 @@ def find_file_in_docker(filename: str) -> pathlib.Path | None:
 # Tools
 mcp = FastMCP("Redmine MCP server")
 get_logger(__name__).info(f"Starting MCP Redmine version {VERSION}")
+# Mandatory startup log for debugging environment
+get_logger(__name__).info(f"Environment: Docker={IS_RUNNING_IN_DOCKER}, MappingConfig='{CONTAINER_ASSETS_MAPPING}', HostPrefix='{HOST_PATH_PREFIX}', ContainerPrefix='{CONTAINER_PATH_PREFIX}'")
 
 @mcp.tool(description="""
 Make a request to the Redmine API
