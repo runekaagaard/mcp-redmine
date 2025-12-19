@@ -88,6 +88,11 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
                 body = None
 
         return {"status_code": status_code, "body": body, "error": f"{e.__class__.__name__}: {e}"}
+        
+def yd(obj):
+    # Allow direct Unicode output, prevent line wrapping for long lines, and avoid automatic key sorting.
+    return yaml.safe_dump(obj, allow_unicode=True, sort_keys=False, width=4096)
+
 
 def yd(obj):
     # Allow direct Unicode output, prevent line wrapping for long lines, and avoid automatic key sorting.
