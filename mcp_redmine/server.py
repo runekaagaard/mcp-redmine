@@ -17,6 +17,37 @@ with open(current_dir / 'redmine_openapi.yml') as f:
 # Constants from environment
 REDMINE_URL = os.environ['REDMINE_URL']
 REDMINE_API_KEY = os.environ['REDMINE_API_KEY']
+REDMINE_ASSETS_DIR = os.getenv('REDMINE_ASSETS_DIR', 'assets')
+CONTAINER_ASSETS_MAPPING = os.getenv('CONTAINER_ASSETS_MAPPING')
+
+def _detect_docker_env() -> bool:
+    """Check if the server is running inside a Docker container."""
+    return os.path.exists('/.dockerenv') or (os.path.exists('/proc/self/cgroup') and any('docker' in line for line in open('/proc/self/cgroup')))
+
+# Determine execution environment once
+IS_RUNNING_IN_DOCKER = _detect_docker_env()
+
+# Pre-process path mapping configuration
+HOST_PATH_PREFIX = None
+CONTAINER_PATH_PREFIX = None
+
+if CONTAINER_ASSETS_MAPPING:
+    try:
+        _host, _container = CONTAINER_ASSETS_MAPPING.split(':')
+        
+        # Normalize paths for comparison (remove leading ./, replace \ with /)
+        def _normalize(p):
+            p = p.replace('\\', '/')
+            if p.startswith('./'): p = p[2:]
+            return p.rstrip('/')
+
+        HOST_PATH_PREFIX = _normalize(_host)
+        CONTAINER_PATH_PREFIX = _normalize(_container)
+    except ValueError:
+        get_logger(__name__).warning(f"Invalid CONTAINER_ASSETS_MAPPING format: '{CONTAINER_ASSETS_MAPPING}'. Expected 'host_path:container_path'. Mapping disabled.")
+    except Exception as e:
+        get_logger(__name__).warning(f"Error parsing CONTAINER_ASSETS_MAPPING: {e}. Mapping disabled.")
+
 if "REDMINE_REQUEST_INSTRUCTIONS" in os.environ:
     with open(os.environ["REDMINE_REQUEST_INSTRUCTIONS"]) as f:
         REDMINE_REQUEST_INSTRUCTIONS = f.read()
@@ -58,10 +89,58 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
                 body = None
 
         return {"status_code": status_code, "body": body, "error": f"{e.__class__.__name__}: {e}"}
-        
+
 def yd(obj):
     # Allow direct Unicode output, prevent line wrapping for long lines, and avoid automatic key sorting.
     return yaml.safe_dump(obj, allow_unicode=True, sort_keys=False, width=4096)
+
+def map_host_to_container(file_path: str) -> str:
+    """
+    Map a host path (AI view) to a container path using pre-parsed prefixes.
+    """
+    if not HOST_PATH_PREFIX or not CONTAINER_PATH_PREFIX:
+        return file_path
+
+    try:
+        # Normalize input path for comparison
+        norm_input = file_path.replace('\\', '/')
+        if norm_input.startswith('./'): norm_input = norm_input[2:]
+        norm_input = norm_input.rstrip('/')
+
+        # Check if the input path starts with the host prefix
+        if norm_input.startswith(HOST_PATH_PREFIX):
+            # Extract relative part
+            rel_part = norm_input[len(HOST_PATH_PREFIX):].lstrip('/')
+            
+            # Construct new path using pathlib for safety
+            new_path = pathlib.Path(CONTAINER_PATH_PREFIX) / rel_part
+            
+            get_logger(__name__).info(f"Mapped path: '{file_path}' -> '{new_path}'")
+            return str(new_path)
+            
+    except Exception as e:
+        get_logger(__name__).error(f"Path mapping failed: {e}")
+    
+    return file_path
+
+def find_file_in_docker(filename: str) -> pathlib.Path | None:
+    """
+    Recursively search for a file by name in the assets directory.
+    Only intended for use within a Docker container to resolve path mapping issues.
+    The search is restricted to the directory specified by REDMINE_ASSETS_DIR (default: 'assets').
+    """
+    try:
+        # Search only in the configured assets directory
+        assets_dir = pathlib.Path.cwd() / REDMINE_ASSETS_DIR
+        
+        if not assets_dir.exists() or not assets_dir.is_dir():
+            return None
+
+        # Using rglob to find the first match
+        match = next(assets_dir.rglob(filename), None)
+        return match
+    except Exception:
+        return None
 
 
 # Tools
@@ -80,8 +159,8 @@ Args:
 Returns:
     str: YAML string containing response status code, body and error message
 
-{}""".format(REDMINE_REQUEST_INSTRUCTIONS).strip())
-    
+{} """.format(REDMINE_REQUEST_INSTRUCTIONS).strip())
+
 def redmine_request(path: str, method: str = 'get', data: dict = None, params: dict = None) -> str:
     return yd(request(path, method=method, data=data, params=params))
 
@@ -90,7 +169,7 @@ def redmine_paths_list() -> str:
     """Return a list of available API paths from OpenAPI spec
     
     Retrieves all endpoint paths defined in the Redmine OpenAPI specification. Remember that you can use the
-    redmine_paths_info tool to get the full specfication for a path.
+    redmine_paths_info tool to get the full specfication for a path. 
     
     Returns:
         str: YAML string containing a list of path templates (e.g. '/issues.json')
@@ -120,7 +199,9 @@ def redmine_upload(file_path: str, description: str = None) -> str:
     Upload a file to Redmine and get a token for attachment
     
     Args:
-        file_path: Path to the file to upload (absolute or relative)
+        file_path: Path to the file to upload.
+                  Note: In Docker/Container environments, relative paths (e.g., 'assets/image.png') are preferred to avoid cross-platform issues.
+                  In native execution, absolute paths are required for security.
         description: Optional description for the file
         
     Returns:
@@ -128,11 +209,26 @@ def redmine_upload(file_path: str, description: str = None) -> str:
              The body contains the attachment token
     """
     try:
-        # Normalize path separators for cross-platform compatibility (Windows client -> Linux server)
-        file_path = file_path.replace('\\', '/')
-        path = pathlib.Path(file_path).expanduser().resolve()
+        # Apply container path mapping if configured and running in Docker
+        if IS_RUNNING_IN_DOCKER:
+            file_path = map_host_to_container(file_path)
+
+        path = pathlib.Path(file_path).expanduser()
+        
+        # Enforce absolute path only if NOT running in Docker
+        if not IS_RUNNING_IN_DOCKER:
+            assert path.is_absolute(), f"Path must be fully qualified, got: {file_path}"
+        
         if not path.exists():
-            return yd({"status_code": 0, "body": None, "error": f"File does not exist: {file_path}"})
+            # Rescue attempt for Docker environments: Search for the file by name
+            if IS_RUNNING_IN_DOCKER:
+                found_path = find_file_in_docker(path.name)
+                if found_path:
+                    path = found_path
+                else:
+                    return yd({"status_code": 0, "body": None, "error": f"File does not exist: {file_path} (and could not be found via search in {pathlib.Path.cwd()})"})
+            else:
+                return yd({"status_code": 0, "body": None, "error": f"File does not exist: {file_path}"})
 
         params = {'filename': path.name}
         if description:
@@ -154,18 +250,27 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
     
     Args:
         attachment_id: The ID of the attachment to download
-        save_path: Path where the file should be saved to (absolute or relative)
-        filename: Optional filename to use for the attachment. If not provided, 
+        save_path: The path where the file should be saved. 
+                  Note: In Docker/Container environments, relative paths (e.g., 'assets/file.txt') are preferred to avoid cross-platform issues.
+                  In native execution, absolute paths are required for security.
+        filename: Optional filename to use for the attachment. If not provided,
                  will be determined from attachment data or URL
-        
+
     Returns:
         str: YAML string containing download status, file path, and any error messages
     """
     try:
-        # Normalize path separators for cross-platform compatibility (Windows client -> Linux server)
-        save_path = save_path.replace('\\', '/')
-        path = pathlib.Path(save_path).expanduser().resolve()
+        # Apply container path mapping if configured and running in Docker
+        if IS_RUNNING_IN_DOCKER:
+            save_path = map_host_to_container(save_path)
+
+        path = pathlib.Path(save_path).expanduser()
         
+        # Enforce absolute path and restrict directory usage only if NOT running in Docker
+        if not IS_RUNNING_IN_DOCKER:
+            assert path.is_absolute(), f"Path must be fully qualified, got: {save_path}"
+            assert not path.is_dir(), f"Path can't be a directory, got: {save_path}"
+
         if not filename:
             attachment_response = request(f"attachments/{attachment_id}.json", "get")
             if attachment_response["status_code"] != 200:
@@ -173,6 +278,7 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
 
             filename = attachment_response["body"]["attachment"]["filename"]
 
+        # Ensure directory exists
         if path.is_dir() or save_path.endswith(("/", "\\")):
             path.mkdir(parents=True, exist_ok=True)
             path = path / filename
@@ -190,7 +296,6 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
         return yd({"status_code": 200, "body": {"saved_to": str(path), "filename": filename}, "error": ""})
     except Exception as e:
         return yd({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
-
 def main():
     """Main entry point for the mcp-redmine package."""
     mcp.run()
