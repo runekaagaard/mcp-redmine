@@ -49,12 +49,13 @@ Add to your `claude_desktop_config.json`:
     "mcpServers": {
       "redmine": {
         "command": "uvx",
-        "args": ["--from", "mcp-redmine==2025.09.03.141435", 
+        "args": ["--from", "mcp-redmine==2026.01.13.145604",
                 "--refresh-package", "mcp-redmine", "mcp-redmine"],
         "env": {
           "REDMINE_URL": "https://your-redmine-instance.example.com",
           "REDMINE_API_KEY": "your-api-key",
-          "REDMINE_REQUEST_INSTRUCTIONS": "/path/to/instructions.md"
+          "REDMINE_REQUEST_INSTRUCTIONS": "/path/to/instructions.md",
+          "REDMINE_ALLOWED_DIRECTORIES": "/tmp,/home/user/uploads"
         }
       }
     }
@@ -87,13 +88,16 @@ Add to your `claude_desktop_config.json`:
             "-e", "REDMINE_URL",
             "-e", "REDMINE_API_KEY",
             "-e", "REDMINE_REQUEST_INSTRUCTIONS",
+            "-e", "REDMINE_ALLOWED_DIRECTORIES",
             "-v", "/path/to/instructions.md:/app/INSTRUCTIONS.md",
+            "-v", "/path/to/uploads:/app/uploads",
             "mcp-redmine"
         ],
         "env": {
           "REDMINE_URL": "https://your-redmine-instance.example.com",
           "REDMINE_API_KEY": "your-api-key",
-          "REDMINE_REQUEST_INSTRUCTIONS": "/app/INSTRUCTIONS.md"
+          "REDMINE_REQUEST_INSTRUCTIONS": "/app/INSTRUCTIONS.md",
+          "REDMINE_ALLOWED_DIRECTORIES": "/app/uploads"
         }
       }
     }
@@ -102,12 +106,19 @@ Add to your `claude_desktop_config.json`:
 
 ## Environment Variables
 
-- `REDMINE_URL`: URL of your Redmine instance (required)
-- `REDMINE_API_KEY`: Your Redmine API key (required, see below for how to get it)
-- `REDMINE_REQUEST_INSTRUCTIONS`: Path to a file containing additional instructions for the redmine_request tool (optional). I've found it works great to have the LLM generate that file after a session. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md))
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `REDMINE_URL` | Yes | - | URL of your Redmine instance. Subpaths are supported (e.g., `http://localhost/redmine/`) |
+| `REDMINE_API_KEY` | Yes | - | Your Redmine API key (see below for how to get it) |
+| `REDMINE_REQUEST_INSTRUCTIONS` | No | - | Path to a file containing additional instructions for the redmine_request tool. I've found it works great to have the LLM generate that file after a session. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md)) |
+| `REDMINE_HEADERS` | No | (empty) | Custom HTTP headers to include in all requests. Format: `"Header1: Value1, Header2: Value2"`. Useful for proxies that require additional authentication (e.g., `X-Redmine-Username`) |
+| `REDMINE_RESPONSE_FORMAT` | No | `yaml` | Response format: `yaml` or `json`. Controls how API responses are formatted |
+| `REDMINE_ALLOWED_DIRECTORIES` | For upload/download | (disabled) | **Required for file operations.** Comma-separated list of directories where upload/download are allowed (e.g., `/tmp,/home/user/uploads`). Upload/download are disabled if not set for security |
 
-> **Note**: When running via Docker, the `REDMINE_REQUEST_INSTRUCTIONS` environment variable must point to a **path inside the container**, not a path on the host machine.  
+> **Note**: When running via Docker, the `REDMINE_REQUEST_INSTRUCTIONS` environment variable must point to a **path inside the container**, not a path on the host machine.
 > Therefore, if you want to use a local file, you need to **mount it into the container** at the correct location.
+
+> **Security Note**: The `REDMINE_ALLOWED_DIRECTORIES` setting protects against path traversal attacks. Paths containing `../` are resolved before validation, ensuring files can only be accessed within the allowed directories.
 
 
 ## Getting Your Redmine API Key
@@ -166,8 +177,9 @@ Add to your `claude_desktop_config.json`:
 
 - **redmine_upload**
   - Upload a file to Redmine and get a token for attachment
+  - **Requires `REDMINE_ALLOWED_DIRECTORIES` to be set**
   - Inputs:
-    - `file_path` (string): Fully qualified path to the file to upload
+    - `file_path` (string): Fully qualified path to the file to upload (must be within allowed directories)
     - `description` (string, optional): Optional description for the file
   - Returns YAML string with the same format as redmine_request, including upload token:
   ```yaml
@@ -181,9 +193,10 @@ Add to your `claude_desktop_config.json`:
 
 - **redmine_download**
   - Download an attachment from Redmine and save it to a local file
+  - **Requires `REDMINE_ALLOWED_DIRECTORIES` to be set**
   - Inputs:
     - `attachment_id` (integer): The ID of the attachment to download
-    - `save_path` (string): Fully qualified path where the file should be saved
+    - `save_path` (string): Fully qualified path where the file should be saved (must be within allowed directories)
     - `filename` (string, optional): Optional filename to use (determined automatically if not provided)
   - Returns YAML string with download results:
   ```yaml
