@@ -114,6 +114,7 @@ Add to your `claude_desktop_config.json`:
 | `REDMINE_HEADERS` | No | (empty) | Custom HTTP headers to include in all requests. Format: `"Header1: Value1, Header2: Value2"`. Useful for proxies that require additional authentication (e.g., `X-Redmine-Username`) |
 | `REDMINE_RESPONSE_FORMAT` | No | `yaml` | Response format: `yaml` or `json`. Controls how API responses are formatted |
 | `REDMINE_ALLOWED_DIRECTORIES` | For upload/download | (disabled) | **Required for file operations.** Comma-separated list of directories where upload/download are allowed (e.g., `/tmp,/home/user/uploads`). Upload/download are disabled if not set for security |
+| `REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS` | No | (disabled) | Set to `1` to disable SSL certificate verification. Use only for self-signed certs in trusted environments |
 
 > **Note**: When running via Docker, the `REDMINE_REQUEST_INSTRUCTIONS` environment variable must point to a **path inside the container**, not a path on the host machine.
 > Therefore, if you want to use a local file, you need to **mount it into the container** at the correct location.

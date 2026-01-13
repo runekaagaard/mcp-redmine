@@ -34,6 +34,9 @@ REDMINE_ALLOWED_DIRECTORIES = [
     if d.strip()
 ]
 
+# SSL verification (disabled only when explicitly set to "1")
+REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS = os.environ.get('REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS') == '1'
+
 if "REDMINE_REQUEST_INSTRUCTIONS" in os.environ:
     with open(os.environ["REDMINE_REQUEST_INSTRUCTIONS"]) as f:
         REDMINE_REQUEST_INSTRUCTIONS = f.read()
@@ -53,7 +56,7 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
 
     try:
         response = httpx.request(method=method.lower(), url=url, json=data, params=params, headers=headers,
-                                 content=content, timeout=60.0)
+                                 content=content, timeout=60.0, verify=not REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS)
         response.raise_for_status()
 
         body = None
