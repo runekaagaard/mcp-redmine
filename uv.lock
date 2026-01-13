@@ -568,7 +568,7 @@ cli = [
 
 [[package]]
 name = "mcp-redmine"
-version = "2026.1.13.145604"
+version = "2026.1.13.152335"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
