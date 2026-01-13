@@ -172,3 +172,4 @@ cython_debug/
 
 # project
 INSTRUCTIONS.md
+claude-artifacts/

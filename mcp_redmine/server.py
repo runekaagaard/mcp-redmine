@@ -185,7 +185,18 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
 
 def main():
     """Main entry point for the mcp-redmine package."""
-    mcp.run()
+    import argparse
+    parser = argparse.ArgumentParser(description="MCP Redmine Server")
+    parser.add_argument("--transport", choices=["stdio", "sse"], default="stdio",
+                        help="Transport type (default: stdio)")
+    parser.add_argument("--host", default="0.0.0.0", help="Host for SSE transport (default: 0.0.0.0)")
+    parser.add_argument("--port", type=int, default=8000, help="Port for SSE transport (default: 8000)")
+    args = parser.parse_args()
+
+    if args.transport == "sse":
+        mcp.settings.host = args.host
+        mcp.settings.port = args.port
+    mcp.run(transport=args.transport)
 
 if __name__ == "__main__":
     main()
