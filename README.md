@@ -261,7 +261,7 @@ Then set this in claude_desktop_config.json:
 ```
 ...
 "command": "uv",
-"args": ["run", "--directory", "/path/to/mcp-redmine", "-m", "mcp_redmine.server", "main"],
+"args": ["run", "--directory", "/path/to/mcp-redmine", "-m", "mcp_redmine.server"],
 ...
 ```
 
