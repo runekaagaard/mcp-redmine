@@ -114,12 +114,15 @@ Add to your `claude_desktop_config.json`:
 | `REDMINE_HEADERS` | No | (empty) | Custom HTTP headers to include in all requests. Format: `"Header1: Value1, Header2: Value2"`. Useful for proxies that require additional authentication (e.g., `X-Redmine-Username`) |
 | `REDMINE_RESPONSE_FORMAT` | No | `yaml` | Response format: `yaml` or `json`. Controls how API responses are formatted |
 | `REDMINE_ALLOWED_DIRECTORIES` | For upload/download | (disabled) | **Required for file operations.** Comma-separated list of directories where upload/download are allowed (e.g., `/tmp,/home/user/uploads`). Upload/download are disabled if not set for security |
+| `REDMINE_READ_ONLY` | No | (disabled) | Set to `1` to block all write operations (POST, PUT, DELETE, PATCH) and file uploads. Useful for allowing AI assistants to safely browse Redmine without risk of modifications |
 | `REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS` | No | (disabled) | Set to `1` to disable SSL certificate verification. Use only for self-signed certs in trusted environments |
 
 > **Note**: When running via Docker, the `REDMINE_REQUEST_INSTRUCTIONS` environment variable must point to a **path inside the container**, not a path on the host machine.
 > Therefore, if you want to use a local file, you need to **mount it into the container** at the correct location.
 
 > **Security Note**: The `REDMINE_ALLOWED_DIRECTORIES` setting protects against path traversal attacks. Paths containing `../` are resolved before validation, ensuring files can only be accessed within the allowed directories.
+
+> **Security Note**: The `REDMINE_READ_ONLY` setting provides a safe browsing mode. When set to `1`, all write operations (`redmine_request` with POST/PUT/DELETE/PATCH and `redmine_upload`) are blocked, while read operations (`redmine_request` with GET, `redmine_download`, `redmine_paths_list`, `redmine_paths_info`) continue to work normally.
 
 
 ## Getting Your Redmine API Key
@@ -160,6 +163,7 @@ Add to your `claude_desktop_config.json`:
 
 - **redmine_request**
   - Make a request to the Redmine API
+  - **When `REDMINE_READ_ONLY=1`: POST, PUT, DELETE, and PATCH requests are blocked**
   - Inputs:
     - `path` (string): API endpoint path (e.g. '/issues.json')
     - `method` (string, optional): HTTP method to use (default: 'get')
@@ -179,6 +183,7 @@ Add to your `claude_desktop_config.json`:
 - **redmine_upload**
   - Upload a file to Redmine and get a token for attachment
   - **Requires `REDMINE_ALLOWED_DIRECTORIES` to be set**
+  - **Blocked when `REDMINE_READ_ONLY=1`**
   - Inputs:
     - `file_path` (string): Fully qualified path to the file to upload (must be within allowed directories)
     - `description` (string, optional): Optional description for the file

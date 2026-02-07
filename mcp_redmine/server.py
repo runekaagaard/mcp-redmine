@@ -37,6 +37,9 @@ REDMINE_ALLOWED_DIRECTORIES = [
 # SSL verification (disabled only when explicitly set to "1")
 REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS = os.environ.get('REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS') == '1'
 
+# Read-only mode (blocks write operations when set to "1")
+REDMINE_READ_ONLY = os.environ.get('REDMINE_READ_ONLY') == '1'
+
 if "REDMINE_REQUEST_INSTRUCTIONS" in os.environ:
     with open(os.environ["REDMINE_REQUEST_INSTRUCTIONS"]) as f:
         REDMINE_REQUEST_INSTRUCTIONS = f.read()
@@ -127,6 +130,10 @@ def validate_path(file_path: str, must_exist: bool = True) -> tuple[str | None, 
 # Tools
 mcp = FastMCP("Redmine MCP server")
 get_logger(__name__).info(f"Starting MCP Redmine version {VERSION}")
+if REDMINE_READ_ONLY:
+    get_logger(__name__).info("Read-only mode is ACTIVE: write operations are blocked")
+
+_read_only_note = "\n\nREAD-ONLY MODE IS ACTIVE: POST, PUT, DELETE, and PATCH requests are blocked." if REDMINE_READ_ONLY else ""
 
 @mcp.tool(description="""
 Make a request to the Redmine API
@@ -140,9 +147,14 @@ Args:
 Returns:
     str: YAML string containing response status code, body and error message
 
-{}""".format(REDMINE_REQUEST_INSTRUCTIONS).strip())
-    
+{}{}""".format(REDMINE_REQUEST_INSTRUCTIONS, _read_only_note).strip())
+
 def redmine_request(path: str, method: str = 'get', data: dict = None, params: dict = None) -> str:
+    if REDMINE_READ_ONLY and method.lower() in ('post', 'put', 'delete', 'patch'):
+        return format_response({
+            "status_code": 0, "body": None,
+            "error": f"Read-only mode is active (REDMINE_READ_ONLY=1): {method.upper()} requests are blocked"
+        })
     return wrap_insecure_content(format_response(request(path, method=method, data=data, params=params)))
 
 @mcp.tool()
@@ -187,6 +199,12 @@ def redmine_upload(file_path: str, description: str = None) -> str:
         str: YAML string containing response status code, body and error message
              The body contains the attachment token
     """
+    if REDMINE_READ_ONLY:
+        return format_response({
+            "status_code": 0, "body": None,
+            "error": "Read-only mode is active (REDMINE_READ_ONLY=1): file uploads are blocked"
+        })
+
     error, path = validate_path(file_path, must_exist=True)
     if error:
         return format_response({"status_code": 0, "body": None, "error": error})
