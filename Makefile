@@ -49,3 +49,9 @@ package-run-test:
 
 package-run-prod:
 	uvx --from mcp-redmine mcp-redmine
+
+test:
+	uv run pytest
+
+test-v:
+	uv run pytest -v

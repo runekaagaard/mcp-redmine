@@ -1,0 +1,13 @@
+services:
+  redmine:
+    image: redmine:latest
+    ports:
+      - "3123:3000"
+    environment:
+      REDMINE_LANG: en
+    healthcheck:
+      test: ["CMD", "ruby", "-r", "net/http", "-e", "Net::HTTP.get(URI('http://localhost:3000/'))"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s

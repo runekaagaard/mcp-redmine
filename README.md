@@ -261,6 +261,23 @@ cd mcp-redmine
 uv sync
 ```
 
+### Running Tests
+
+Tests are integration tests that run against a real Redmine instance in Docker. You need Docker installed and running.
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run with verbose output
+uv run pytest -v
+
+# Run a specific test class
+uv run pytest tests/test_read_only.py::TestReadOnlyWritesBlocked -v
+```
+
+Docker Compose will automatically start a Redmine container, wait for it to be healthy, run the tests, and tear down afterwards.
+
 Then set this in claude_desktop_config.json:
 
 ```

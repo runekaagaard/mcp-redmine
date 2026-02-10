@@ -41,4 +41,8 @@ package = true
 dev = [
     "build>=1.2.2.post1",
     "hatchling>=1.27.0",
+    "pytest>=8.0",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
