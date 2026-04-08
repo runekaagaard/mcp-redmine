@@ -37,6 +37,11 @@ REDMINE_ALLOWED_DIRECTORIES = [
 # SSL verification (disabled only when explicitly set to "1")
 REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS = os.environ.get('REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS') == '1'
 
+# Persistent HTTP client — reuses TCP/TLS connections across calls instead of opening a new one each time.
+# Using httpx.request() (top-level function) creates a new connection per call, which adds ~2 minutes of
+# TLS handshake overhead on each request when connecting to internal/corporate Redmine servers.
+_http_client = httpx.Client(timeout=60.0, verify=not REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS)
+
 if "REDMINE_REQUEST_INSTRUCTIONS" in os.environ:
     with open(os.environ["REDMINE_REQUEST_INSTRUCTIONS"]) as f:
         REDMINE_REQUEST_INSTRUCTIONS = f.read()
@@ -55,8 +60,8 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
     url = urljoin(REDMINE_URL, path.lstrip('/'))
 
     try:
-        response = httpx.request(method=method.lower(), url=url, json=data, params=params, headers=headers,
-                                 content=content, timeout=60.0, verify=not REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS)
+        response = _http_client.request(method=method.lower(), url=url, json=data, params=params, headers=headers,
+                                       content=content)
         response.raise_for_status()
 
         body = None
