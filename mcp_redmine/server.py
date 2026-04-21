@@ -253,15 +253,19 @@ def main():
     """Main entry point for the mcp-redmine package."""
     import argparse
     parser = argparse.ArgumentParser(description="MCP Redmine Server")
-    parser.add_argument("--transport", choices=["stdio", "sse"], default="stdio",
+    parser.add_argument("--transport", choices=["stdio", "sse", "streamable-http"], default="stdio",
                         help="Transport type (default: stdio)")
-    parser.add_argument("--host", default="0.0.0.0", help="Host for SSE transport (default: 0.0.0.0)")
-    parser.add_argument("--port", type=int, default=8000, help="Port for SSE transport (default: 8000)")
+    parser.add_argument("--host", default="0.0.0.0",
+                        help="Host for sse/streamable-http transport (default: 0.0.0.0)")
+    parser.add_argument("--port", type=int, default=8000,
+                        help="Port for sse/streamable-http transport (default: 8000)")
     args = parser.parse_args()
 
-    if args.transport == "sse":
+    if args.transport in ("sse", "streamable-http"):
         mcp.settings.host = args.host
         mcp.settings.port = args.port
+        if args.transport == "streamable-http":
+            mcp.settings.stateless_http = True
     mcp.run(transport=args.transport)
 
 if __name__ == "__main__":
