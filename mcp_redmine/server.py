@@ -40,7 +40,13 @@ REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS = os.environ.get('REDMINE_DANGEROUSLY_A
 # Persistent HTTP client — reuses TCP/TLS connections across calls instead of opening a new one each time.
 # Using httpx.request() (top-level function) creates a new connection per call, which adds ~2 minutes of
 # TLS handshake overhead on each request when connecting to internal/corporate Redmine servers.
-_http_client = httpx.Client(timeout=60.0, verify=not REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS)
+# keepalive_expiry=120 keeps connections alive for 2 minutes; the httpx default of 5s means every call
+# after a short pause pays a full ~600ms TLS reconnect cost.
+_http_client = httpx.Client(
+    timeout=60.0,
+    verify=not REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS,
+    limits=httpx.Limits(max_keepalive_connections=5, keepalive_expiry=120),
+)
 
 if "REDMINE_REQUEST_INSTRUCTIONS" in os.environ:
     with open(os.environ["REDMINE_REQUEST_INSTRUCTIONS"]) as f:
