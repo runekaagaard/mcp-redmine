@@ -2,7 +2,7 @@ import os, yaml, pathlib, json, uuid
 from urllib.parse import urljoin
 
 import httpx
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.fastmcp.utilities.logging import get_logger
 
 ### Constants ###
@@ -16,7 +16,7 @@ with open(current_dir / 'redmine_openapi.yml') as f:
 
 # Constants from environment
 REDMINE_URL = os.environ['REDMINE_URL'].rstrip('/') + '/'  # Normalize to always end with /
-REDMINE_API_KEY = os.environ['REDMINE_API_KEY']
+REDMINE_API_KEY = os.environ.get('REDMINE_API_KEY', '')
 REDMINE_RESPONSE_FORMAT = os.environ.get('REDMINE_RESPONSE_FORMAT', 'yaml').lower()
 
 # Custom headers (format: "Header1: Value1, Header2: Value2")
@@ -46,11 +46,12 @@ else:
 
 # Core
 def request(path: str, method: str = 'get', data: dict = None, params: dict = None,
-            content_type: str = 'application/json', content: bytes = None) -> dict:
+            content_type: str = 'application/json', content: bytes = None,
+            api_key: str = REDMINE_API_KEY) -> dict:
     headers = {
-        'X-Redmine-API-Key': REDMINE_API_KEY,
         'Content-Type': content_type,
-        **REDMINE_HEADERS
+        **REDMINE_HEADERS,
+        'X-Redmine-API-Key': api_key,
     }
     url = urljoin(REDMINE_URL, path.lstrip('/'))
 
@@ -95,6 +96,20 @@ def wrap_insecure_content(content: str) -> str:
     """Wrap content that may contain user-generated data with security tags to prevent prompt injection."""
     tag_id = uuid.uuid4().hex[:16]
     return f"<insecure-content-{tag_id}>\n{content}\n</insecure-content-{tag_id}>"
+
+
+def resolve_api_key(ctx: Context | None) -> str:
+    """Per-request X-Redmine-API-Key header wins; fall back to env REDMINE_API_KEY."""
+    if ctx is not None:
+        try:
+            req = ctx.request_context.request  # Starlette Request for HTTP transports, None for stdio
+            if req is not None:
+                header_key = req.headers.get('X-Redmine-API-Key')
+                if header_key:
+                    return header_key
+        except (LookupError, AttributeError, ValueError):
+            pass  # No active request context (e.g. stdio)
+    return REDMINE_API_KEY
 
 
 def validate_path(file_path: str, must_exist: bool = True) -> tuple[str | None, pathlib.Path | None]:
@@ -142,8 +157,10 @@ Returns:
 
 {}""".format(REDMINE_REQUEST_INSTRUCTIONS).strip())
     
-def redmine_request(path: str, method: str = 'get', data: dict = None, params: dict = None) -> str:
-    return wrap_insecure_content(format_response(request(path, method=method, data=data, params=params)))
+def redmine_request(path: str, method: str = 'get', data: dict = None, params: dict = None,
+                    ctx: Context = None) -> str:
+    return wrap_insecure_content(format_response(
+        request(path, method=method, data=data, params=params, api_key=resolve_api_key(ctx))))
 
 @mcp.tool()
 def redmine_paths_list() -> str:
@@ -175,7 +192,7 @@ def redmine_paths_info(path_templates: list) -> str:
     return format_response(info)
 
 @mcp.tool()
-def redmine_upload(file_path: str, description: str = None) -> str:
+def redmine_upload(file_path: str, description: str = None, ctx: Context = None) -> str:
     """
     Upload a file to Redmine and get a token for attachment
 
@@ -200,13 +217,14 @@ def redmine_upload(file_path: str, description: str = None) -> str:
             file_content = f.read()
 
         result = request(path='uploads.json', method='post', params=params,
-                         content_type='application/octet-stream', content=file_content)
+                         content_type='application/octet-stream', content=file_content,
+                         api_key=resolve_api_key(ctx))
         return format_response(result)
     except Exception as e:
         return format_response({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
 
 @mcp.tool()
-def redmine_download(attachment_id: int, save_path: str, filename: str = None) -> str:
+def redmine_download(attachment_id: int, save_path: str, filename: str = None, ctx: Context = None) -> str:
     """
     Download an attachment from Redmine and save it to a local file
 
@@ -227,15 +245,16 @@ def redmine_download(attachment_id: int, save_path: str, filename: str = None) -
         return format_response({"status_code": 0, "body": None, "error": f"Path can't be a directory: {save_path}"})
 
     try:
+        api_key = resolve_api_key(ctx)
         if not filename:
-            attachment_response = request(f"attachments/{attachment_id}.json", "get")
+            attachment_response = request(f"attachments/{attachment_id}.json", "get", api_key=api_key)
             if attachment_response["status_code"] != 200:
                 return format_response(attachment_response)
 
             filename = attachment_response["body"]["attachment"]["filename"]
 
         response = request(f"attachments/download/{attachment_id}/{filename}", "get",
-                           content_type="application/octet-stream")
+                           content_type="application/octet-stream", api_key=api_key)
         if response["status_code"] != 200 or not response["body"]:
             return format_response(response)
 
@@ -253,13 +272,13 @@ def main():
     """Main entry point for the mcp-redmine package."""
     import argparse
     parser = argparse.ArgumentParser(description="MCP Redmine Server")
-    parser.add_argument("--transport", choices=["stdio", "sse"], default="stdio",
+    parser.add_argument("--transport", choices=["stdio", "sse", "streamable-http"], default="stdio",
                         help="Transport type (default: stdio)")
-    parser.add_argument("--host", default="0.0.0.0", help="Host for SSE transport (default: 0.0.0.0)")
-    parser.add_argument("--port", type=int, default=8000, help="Port for SSE transport (default: 8000)")
+    parser.add_argument("--host", default="0.0.0.0", help="Host for HTTP transports (default: 0.0.0.0)")
+    parser.add_argument("--port", type=int, default=8000, help="Port for HTTP transports (default: 8000)")
     args = parser.parse_args()
 
-    if args.transport == "sse":
+    if args.transport in ("sse", "streamable-http"):
         mcp.settings.host = args.host
         mcp.settings.port = args.port
     mcp.run(transport=args.transport)

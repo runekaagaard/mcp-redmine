@@ -109,7 +109,7 @@ Add to your `claude_desktop_config.json`:
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `REDMINE_URL` | Yes | - | URL of your Redmine instance. Subpaths are supported (e.g., `http://localhost/redmine/`) |
-| `REDMINE_API_KEY` | Yes | - | Your Redmine API key (see below for how to get it) |
+| `REDMINE_API_KEY` | Conditional | - | Your Redmine API key (see below for how to get it). Optional if clients send a per-request `X-Redmine-API-Key` header (see [Per-user API keys](#per-user-api-keys)); the header takes precedence over this env var when both are present |
 | `REDMINE_REQUEST_INSTRUCTIONS` | No | - | Path to a file containing additional instructions for the redmine_request tool. I've found it works great to have the LLM generate that file after a session. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md)) |
 | `REDMINE_HEADERS` | No | (empty) | Custom HTTP headers to include in all requests. Format: `"Header1: Value1, Header2: Value2"`. Useful for proxies that require additional authentication (e.g., `X-Redmine-Username`) |
 | `REDMINE_RESPONSE_FORMAT` | No | `yaml` | Response format: `yaml` or `json`. Controls how API responses are formatted |
@@ -118,6 +118,30 @@ Add to your `claude_desktop_config.json`:
 
 > **Note**: When running via Docker, the `REDMINE_REQUEST_INSTRUCTIONS` environment variable must point to a **path inside the container**, not a path on the host machine.
 > Therefore, if you want to use a local file, you need to **mount it into the container** at the correct location.
+
+## Transports
+
+The server supports three transports, selected with `--transport`:
+
+| Transport | Flag | Default endpoint |
+|-----------|------|------------------|
+| stdio (default) | `--transport stdio` | - |
+| SSE | `--transport sse` | `http://<host>:<port>/sse` |
+| Streamable HTTP | `--transport streamable-http` | `http://<host>:<port>/mcp` |
+
+For the HTTP transports, set the bind address with `--host` (default `0.0.0.0`) and `--port` (default `8000`), e.g.:
+
+```bash
+uv run -m mcp_redmine.server --transport streamable-http --host 0.0.0.0 --port 8000
+```
+
+## Per-user API keys
+
+By default every request authenticates with the global `REDMINE_API_KEY` env var. When you serve
+multiple users over an HTTP transport (SSE or streamable-http), you can instead let each request
+carry its own key via the `X-Redmine-API-Key` header. If the header is present it takes precedence
+over `REDMINE_API_KEY`; otherwise the env var is used as a fallback. This means `REDMINE_API_KEY`
+becomes optional — you can run the server with no key configured and rely entirely on the header.
 
 > **Security Note**: The `REDMINE_ALLOWED_DIRECTORIES` setting protects against path traversal attacks. Paths containing `../` are resolved before validation, ensuring files can only be accessed within the allowed directories.
 
