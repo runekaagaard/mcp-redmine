@@ -5,10 +5,10 @@ description = "A MCP server that connects to your Redmine instance"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "httpx>=0.28.1",
-    "mcp[cli]>=1.9.0",
-    "openapi-core>=0.19.4",
-    "pyyaml>=6.0.2",
+    "httpx==0.28.1",
+    "mcp[cli]==1.25.0",
+    "openapi-core==0.19.4",
+    "pyyaml==6.0.2",
 ]
 authors = [
   { name="Rune Kaagaard" },
@@ -39,6 +39,6 @@ package = true
 
 [dependency-groups]
 dev = [
-    "build>=1.2.2.post1",
-    "hatchling>=1.27.0",
+    "build==1.2.2.post1",
+    "hatchling==1.27.0",
 ]

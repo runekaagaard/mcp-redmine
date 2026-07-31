@@ -585,16 +585,16 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "mcp", extras = ["cli"], specifier = ">=1.9.0" },
-    { name = "openapi-core", specifier = ">=0.19.4" },
-    { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "mcp", extras = ["cli"], specifier = "==1.25.0" },
+    { name = "openapi-core", specifier = "==0.19.4" },
+    { name = "pyyaml", specifier = "==6.0.2" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "build", specifier = ">=1.2.2.post1" },
-    { name = "hatchling", specifier = ">=1.27.0" },
+    { name = "build", specifier = "==1.2.2.post1" },
+    { name = "hatchling", specifier = "==1.27.0" },
 ]
 
 [[package]]

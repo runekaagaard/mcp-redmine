@@ -197,8 +197,8 @@ Add to your `claude_desktop_config.json`:
   - **Requires `REDMINE_ALLOWED_DIRECTORIES` to be set**
   - Inputs:
     - `attachment_id` (integer): The ID of the attachment to download
-    - `save_path` (string): Fully qualified path where the file should be saved (must be within allowed directories)
-    - `filename` (string, optional): Optional filename to use (determined automatically if not provided)
+    - `save_path` (string): Fully qualified file path (not directory) where the file should be saved (must be within allowed directories)
+    - `filename` (string, optional): Optional filename for the Redmine download URL (determined automatically from attachment metadata if not provided)
   - Returns YAML string with download results:
   ```yaml
   status_code: 200

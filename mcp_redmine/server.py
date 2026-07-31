@@ -206,15 +206,15 @@ def redmine_upload(file_path: str, description: str = None) -> str:
         return format_response({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
 
 @mcp.tool()
-def redmine_download(attachment_id: int, save_path: str, filename: str = None) -> str:
+def redmine_download(attachment_id: int, save_path: str, filename: str | None = None) -> str:
     """
     Download an attachment from Redmine and save it to a local file
 
     Args:
         attachment_id: The ID of the attachment to download
-        save_path: Fully qualified path where the file should be saved to (must be within REDMINE_ALLOWED_DIRECTORIES)
-        filename: Optional filename to use for the attachment. If not provided,
-                 will be determined from attachment data or URL
+        save_path: Fully qualified file path (not directory) where the file should be saved to (must be within REDMINE_ALLOWED_DIRECTORIES)
+        filename: Optional filename for the Redmine download URL. If not provided,
+                 will be determined from attachment metadata. Does not affect the local save path.
 
     Returns:
         str: YAML string containing download status, file path, and any error messages
