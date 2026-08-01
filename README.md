@@ -110,7 +110,7 @@ Add to your `claude_desktop_config.json`:
 |----------|----------|---------|-------------|
 | `REDMINE_URL` | Yes | - | URL of your Redmine instance. Subpaths are supported (e.g., `http://localhost/redmine/`) |
 | `REDMINE_API_KEY` | Yes | - | Your Redmine API key (see below for how to get it) |
-| `REDMINE_REQUEST_INSTRUCTIONS` | No | - | Path to a file containing additional instructions for the redmine_request tool. I've found it works great to have the LLM generate that file after a session. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md)) |
+| `REDMINE_REQUEST_INSTRUCTIONS` | No | - | Path to a file containing additional instructions for the redmine_request_* tools. I've found it works great to have the LLM generate that file after a session. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md)) |
 | `REDMINE_HEADERS` | No | (empty) | Custom HTTP headers to include in all requests. Format: `"Header1: Value1, Header2: Value2"`. Useful for proxies that require additional authentication (e.g., `X-Redmine-Username`) |
 | `REDMINE_RESPONSE_FORMAT` | No | `yaml` | Response format: `yaml` or `json`. Controls how API responses are formatted |
 | `REDMINE_ALLOWED_DIRECTORIES` | For upload/download | (disabled) | **Required for file operations.** Comma-separated list of directories where upload/download are allowed (e.g., `/tmp,/home/user/uploads`). Upload/download are disabled if not set for security |
@@ -158,12 +158,11 @@ Add to your `claude_desktop_config.json`:
       ...
   ```
 
-- **redmine_request**
-  - Make a request to the Redmine API
-  - Inputs:
+- **redmine_request_get**, **redmine_request_post**, **redmine_request_put**, **redmine_request_patch**, **redmine_request_delete**
+  - Make a method-specific request to the Redmine API
+  - Inputs (vary by method):
     - `path` (string): API endpoint path (e.g. '/issues.json')
-    - `method` (string, optional): HTTP method to use (default: 'get')
-    - `data` (object, optional): Dictionary for request body (for POST/PUT)
+    - `data` (object, optional): Dictionary for request body (for POST/PUT/PATCH)
     - `params` (object, optional): Dictionary for query parameters
   - Returns YAML string containing response status code, body and error message:
   ```yaml

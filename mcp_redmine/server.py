@@ -129,21 +129,77 @@ mcp = FastMCP("Redmine MCP server")
 get_logger(__name__).info(f"Starting MCP Redmine version {VERSION}")
 
 @mcp.tool(description="""
-Make a request to the Redmine API
+Make a GET request to the Redmine API
 
 Args:
     path: API endpoint path (e.g. '/issues.json')
-    method: HTTP method to use (default: 'get')
-    data: Dictionary for request body (for POST/PUT)
     params: Dictionary for query parameters
 
 Returns:
     str: YAML string containing response status code, body and error message
 
 {}""".format(REDMINE_REQUEST_INSTRUCTIONS).strip())
-    
-def redmine_request(path: str, method: str = 'get', data: dict = None, params: dict = None) -> str:
-    return wrap_insecure_content(format_response(request(path, method=method, data=data, params=params)))
+def redmine_request_get(path: str, params: dict = None) -> str:
+    return wrap_insecure_content(format_response(request(path, method='get', params=params)))
+
+@mcp.tool(description="""
+Make a POST request to the Redmine API
+
+Args:
+    path: API endpoint path (e.g. '/issues.json')
+    data: Dictionary for request body
+    params: Dictionary for query parameters
+
+Returns:
+    str: YAML string containing response status code, body and error message
+
+{}""".format(REDMINE_REQUEST_INSTRUCTIONS).strip())
+def redmine_request_post(path: str, data: dict = None, params: dict = None) -> str:
+    return wrap_insecure_content(format_response(request(path, method='post', data=data, params=params)))
+
+@mcp.tool(description="""
+Make a PUT request to the Redmine API
+
+Args:
+    path: API endpoint path (e.g. '/issues.json')
+    data: Dictionary for request body
+    params: Dictionary for query parameters
+
+Returns:
+    str: YAML string containing response status code, body and error message
+
+{}""".format(REDMINE_REQUEST_INSTRUCTIONS).strip())
+def redmine_request_put(path: str, data: dict = None, params: dict = None) -> str:
+    return wrap_insecure_content(format_response(request(path, method='put', data=data, params=params)))
+
+@mcp.tool(description="""
+Make a PATCH request to the Redmine API
+
+Args:
+    path: API endpoint path (e.g. '/issues.json')
+    data: Dictionary for request body
+    params: Dictionary for query parameters
+
+Returns:
+    str: YAML string containing response status code, body and error message
+
+{}""".format(REDMINE_REQUEST_INSTRUCTIONS).strip())
+def redmine_request_patch(path: str, data: dict = None, params: dict = None) -> str:
+    return wrap_insecure_content(format_response(request(path, method='patch', data=data, params=params)))
+
+@mcp.tool(description="""
+Make a DELETE request to the Redmine API
+
+Args:
+    path: API endpoint path (e.g. '/issues.json')
+    params: Dictionary for query parameters
+
+Returns:
+    str: YAML string containing response status code, body and error message
+
+{}""".format(REDMINE_REQUEST_INSTRUCTIONS).strip())
+def redmine_request_delete(path: str, params: dict = None) -> str:
+    return wrap_insecure_content(format_response(request(path, method='delete', params=params)))
 
 @mcp.tool()
 def redmine_paths_list() -> str:
