@@ -128,8 +128,24 @@ def validate_path(file_path: str, must_exist: bool = True) -> tuple[str | None, 
 mcp = FastMCP("Redmine MCP server")
 get_logger(__name__).info(f"Starting MCP Redmine version {VERSION}")
 
+@mcp.tool(
+    description="""
+Make a read-only request to the Redmine API
+
+Args:
+    path: API endpoint path (e.g. '/issues.json')
+    params: Dictionary for query parameters
+
+Returns:
+    str: YAML string containing response status code, body and error message
+
+{}""".format(REDMINE_REQUEST_INSTRUCTIONS).strip()
+)
+def get_redmine_request(path: str, params: dict = None) -> str:
+    return wrap_insecure_content(format_response(request(path, method="GET", data=None, params=params)))
+
 @mcp.tool(description="""
-Make a request to the Redmine API
+Make a any request to the Redmine API
 
 Args:
     path: API endpoint path (e.g. '/issues.json')
@@ -142,7 +158,7 @@ Returns:
 
 {}""".format(REDMINE_REQUEST_INSTRUCTIONS).strip())
     
-def redmine_request(path: str, method: str = 'get', data: dict = None, params: dict = None) -> str:
+def any_redmine_request(path: str, method: str = 'get', data: dict = None, params: dict = None) -> str:
     return wrap_insecure_content(format_response(request(path, method=method, data=data, params=params)))
 
 @mcp.tool()
