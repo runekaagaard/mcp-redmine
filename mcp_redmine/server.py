@@ -2,8 +2,8 @@ import os, yaml, pathlib, json, uuid
 from urllib.parse import urljoin
 
 import httpx
-from mcp.server.fastmcp import FastMCP
-from mcp.server.fastmcp.utilities.logging import get_logger
+from mcp.server.mcpserver import MCPServer, Image
+from mcp.server.mcpserver.utilities.logging import get_logger
 
 ### Constants ###
 
@@ -37,6 +37,19 @@ REDMINE_ALLOWED_DIRECTORIES = [
 # SSL verification (disabled only when explicitly set to "1")
 REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS = os.environ.get('REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS') == '1'
 
+# Custom CA bundle for private certificate chains (path to a ca.crt / bundle file)
+REDMINE_CA_BUNDLE = os.environ.get('REDMINE_CA_BUNDLE', '')
+
+# Read-only mode (enabled when set to "1") - only GET requests are allowed
+REDMINE_READ_ONLY = os.environ.get('REDMINE_READ_ONLY') == '1'
+
+if REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS:
+    _ssl_verify = False
+elif REDMINE_CA_BUNDLE:
+    _ssl_verify = REDMINE_CA_BUNDLE
+else:
+    _ssl_verify = True
+
 # Persistent HTTP client — reuses TCP/TLS connections across calls instead of opening a new one each time.
 # Using httpx.request() (top-level function) creates a new connection per call, which adds ~2 minutes of
 # TLS handshake overhead on each request when connecting to internal/corporate Redmine servers.
@@ -44,7 +57,7 @@ REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS = os.environ.get('REDMINE_DANGEROUSLY_A
 # after a short pause pays a full ~600ms TLS reconnect cost.
 _http_client = httpx.Client(
     timeout=60.0,
-    verify=not REDMINE_DANGEROUSLY_ACCEPT_INVALID_CERTS,
+    verify=_ssl_verify,
     limits=httpx.Limits(max_keepalive_connections=5, keepalive_expiry=120),
 )
 
@@ -58,12 +71,23 @@ else:
 # Core
 def request(path: str, method: str = 'get', data: dict = None, params: dict = None,
             content_type: str = 'application/json', content: bytes = None) -> dict:
+    if REDMINE_READ_ONLY and method.lower() != 'get':
+        return {"status_code": 0, "body": None,
+                "error": f"REDMINE_READ_ONLY is enabled: refusing {method.upper()} request"}
+
     headers = {
         'X-Redmine-API-Key': REDMINE_API_KEY,
         'Content-Type': content_type,
         **REDMINE_HEADERS
     }
+
+    # Security: path is model-controlled. urljoin returns absolute URLs in `path` unchanged, which would
+    # redirect the request (and the API key header) to an arbitrary host. Only ever allow URLs that stay
+    # under REDMINE_URL (which is normalized to end with '/'), also catching '../' path traversal.
     url = urljoin(REDMINE_URL, path.lstrip('/'))
+    if not url.startswith(REDMINE_URL):
+        return {"status_code": 0, "body": None,
+                "error": f"Path escapes REDMINE_URL, refusing to send API key to: {url}"}
 
     try:
         response = _http_client.request(method=method.lower(), url=url, json=data, params=params, headers=headers,
@@ -136,7 +160,7 @@ def validate_path(file_path: str, must_exist: bool = True) -> tuple[str | None, 
 
 
 # Tools
-mcp = FastMCP("Redmine MCP server")
+mcp = MCPServer("Redmine MCP server", version=VERSION)
 get_logger(__name__).info(f"Starting MCP Redmine version {VERSION}")
 
 @mcp.tool(description="""
@@ -260,20 +284,64 @@ def redmine_download(attachment_id: int, save_path: str, filename: str | None = 
     except Exception as e:
         return format_response({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
 
+# Max size for images returned inline as tool content (base64 roughly x1.33, so keep this modest)
+ATTACHMENT_IMAGE_MAX_BYTES = 5 * 1024 * 1024
+
+@mcp.tool()
+def redmine_attachment_image(attachment_id: int) -> Image | str:
+    """
+    Fetch an image attachment (e.g. an inline screenshot like !screenshot.png!) and return it as viewable
+    image content. Use redmine_request on '/issues/{id}.json' with params {'include': 'attachments'} to find
+    attachment ids.
+
+    Args:
+        attachment_id: The ID of the image attachment to fetch
+
+    Returns:
+        Image content on success, or a YAML error string on failure
+    """
+    try:
+        attachment_response = request(f"attachments/{attachment_id}.json", "get")
+        if attachment_response["status_code"] != 200:
+            return format_response(attachment_response)
+
+        attachment = attachment_response["body"]["attachment"]
+        content_type = attachment.get("content_type") or ""
+        if not content_type.startswith("image/"):
+            return format_response({
+                "status_code": 0, "body": None,
+                "error": f"Attachment is not an image (content_type: {content_type}). "
+                         "Use redmine_download to save it to disk instead."})
+        if attachment.get("filesize", 0) > ATTACHMENT_IMAGE_MAX_BYTES:
+            return format_response({
+                "status_code": 0, "body": None,
+                "error": f"Image too large ({attachment['filesize']} bytes, max {ATTACHMENT_IMAGE_MAX_BYTES}). "
+                         "Use redmine_download to save it to disk instead."})
+
+        response = request(f"attachments/download/{attachment_id}/{attachment['filename']}", "get",
+                           content_type="application/octet-stream")
+        if response["status_code"] != 200 or not response["body"]:
+            return format_response(response)
+
+        return Image(data=response["body"], format=content_type.removeprefix("image/"))
+    except Exception as e:
+        return format_response({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
+
 def main():
     """Main entry point for the mcp-redmine package."""
     import argparse
     parser = argparse.ArgumentParser(description="MCP Redmine Server")
-    parser.add_argument("--transport", choices=["stdio", "sse"], default="stdio",
-                        help="Transport type (default: stdio)")
-    parser.add_argument("--host", default="0.0.0.0", help="Host for SSE transport (default: 0.0.0.0)")
-    parser.add_argument("--port", type=int, default=8000, help="Port for SSE transport (default: 8000)")
+    parser.add_argument("--transport", choices=["stdio", "streamable-http", "sse"], default="stdio",
+                        help="Transport type (default: stdio). streamable-http is the recommended HTTP "
+                             "transport, sse is supported for legacy clients.")
+    parser.add_argument("--host", default="0.0.0.0", help="Host for HTTP transports (default: 0.0.0.0)")
+    parser.add_argument("--port", type=int, default=8000, help="Port for HTTP transports (default: 8000)")
     args = parser.parse_args()
 
-    if args.transport == "sse":
-        mcp.settings.host = args.host
-        mcp.settings.port = args.port
-    mcp.run(transport=args.transport)
+    if args.transport == "stdio":
+        mcp.run(transport="stdio")
+    else:
+        mcp.run(transport=args.transport, host=args.host, port=args.port)
 
 if __name__ == "__main__":
     main()

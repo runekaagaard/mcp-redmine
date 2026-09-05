@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "httpx==0.28.1",
-    "mcp[cli]==1.25.0",
+    "mcp[cli]==2.1.1",
     "openapi-core==0.19.4",
     "pyyaml==6.0.2",
 ]
@@ -39,6 +39,7 @@ package = true
 
 [dependency-groups]
 dev = [
+    "pytest==8.3.4",
     "build==1.2.2.post1",
     "hatchling==1.27.0",
 ]
