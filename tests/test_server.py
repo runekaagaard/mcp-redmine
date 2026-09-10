@@ -149,3 +149,36 @@ def test_attachment_image_returns_image(monkeypatch):
     monkeypatch.setattr(server, "request", fake_request)
     result = server.redmine_attachment_image(1)
     assert isinstance(result, server.Image)
+
+
+# Raw downloads (#46): attachments whose content is valid JSON must be saved byte-exact
+
+JSON_BYTES = b'{"info": {"name": "collection"}, "item": []}'
+
+
+def test_request_raw_returns_bytes_for_json_content(monkeypatch):
+    def fake_request(method, url, **kwargs):
+        response = FakeResponse(json_body={"info": {"name": "collection"}, "item": []})
+        response.content = JSON_BYTES
+        return response
+
+    monkeypatch.setattr(server._http_client, "request", fake_request)
+    assert server.request("attachments/download/1/collection.json", raw=True)["body"] == JSON_BYTES
+    # without raw, the same response is parsed (existing behaviour for API calls)
+    assert isinstance(server.request("some.json")["body"], dict)
+
+
+def test_redmine_download_saves_json_attachment(monkeypatch, tmp_path):
+    monkeypatch.setattr(server, "REDMINE_ALLOWED_DIRECTORIES", [tmp_path])
+
+    def fake_request(path, method="get", **kwargs):
+        if path.endswith(".json") and not kwargs.get("raw"):
+            return {"status_code": 200, "error": "",
+                    "body": {"attachment": {"filename": "collection.json"}}}
+        assert kwargs.get("raw") is True
+        return {"status_code": 200, "error": "", "body": JSON_BYTES}
+
+    monkeypatch.setattr(server, "request", fake_request)
+    result = server.redmine_download(1, str(tmp_path / "out.json"))
+    assert "saved_to" in result and "error: ''" in result
+    assert (tmp_path / "out.json").read_bytes() == JSON_BYTES

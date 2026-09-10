@@ -70,7 +70,7 @@ else:
 
 # Core
 def request(path: str, method: str = 'get', data: dict = None, params: dict = None,
-            content_type: str = 'application/json', content: bytes = None) -> dict:
+            content_type: str = 'application/json', content: bytes = None, raw: bool = False) -> dict:
     if REDMINE_READ_ONLY and method.lower() != 'get':
         return {"status_code": 0, "body": None,
                 "error": f"REDMINE_READ_ONLY is enabled: refusing {method.upper()} request"}
@@ -95,7 +95,11 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
         response.raise_for_status()
 
         body = None
-        if response.content:
+        if raw:
+            # Downloads must keep the exact bytes: an attachment that happens to be valid JSON
+            # (e.g. a Postman collection) must not be parsed into a dict (#46).
+            body = response.content
+        elif response.content:
             try:
                 body = response.json()
             except ValueError:
@@ -270,7 +274,7 @@ def redmine_download(attachment_id: int, save_path: str, filename: str | None = 
             filename = attachment_response["body"]["attachment"]["filename"]
 
         response = request(f"attachments/download/{attachment_id}/{filename}", "get",
-                           content_type="application/octet-stream")
+                           content_type="application/octet-stream", raw=True)
         if response["status_code"] != 200 or not response["body"]:
             return format_response(response)
 
@@ -319,7 +323,7 @@ def redmine_attachment_image(attachment_id: int) -> Image | str:
                          "Use redmine_download to save it to disk instead."})
 
         response = request(f"attachments/download/{attachment_id}/{attachment['filename']}", "get",
-                           content_type="application/octet-stream")
+                           content_type="application/octet-stream", raw=True)
         if response["status_code"] != 200 or not response["body"]:
             return format_response(response)
 
