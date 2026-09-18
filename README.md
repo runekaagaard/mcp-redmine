@@ -1,8 +1,6 @@
 # MCP Redmine
 
-**Status: Works great and is in daily use without any known bugs.**
-
-**Status2: I just added the package to PyPI and updated the usage instructions. Please report any issues :)**
+**Status: Actively maintained and in daily use. Tested releases are published to PyPI with git tags, and issues and pull requests are triaged regularly.**
 
 Let Claude be your Redmine assistant! MCP Redmine connects Claude Desktop to your Redmine instance, allowing it to:
 
