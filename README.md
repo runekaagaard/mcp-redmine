@@ -144,6 +144,33 @@ mcp-redmine --transport sse --host 0.0.0.0 --port 8000
 > **Security Note**: The `REDMINE_ALLOWED_DIRECTORIES` setting protects against path traversal attacks. Paths containing `../` are resolved before validation, ensuring files can only be accessed within the allowed directories.
 
 
+## Response credential protection
+
+All text tool results are sanitized before YAML/JSON serialization. Nested objects and arrays have
+`api_key` values replaced with `[REDACTED]`, including case, underscore, hyphen and space variants
+such as `apiKey` and `X-Redmine-API-Key`. Field names and the response envelope are retained.
+Keys found in structured `api_key` fields are also removed from sibling text echoes in that result.
+The configured `REDMINE_API_KEY` (and a custom `X-Redmine-API-Key` header value) is also removed
+from strings, dictionary keys, non-JSON response bytes, error messages and server/HTTP diagnostic logs.
+Authentication headers sent to Redmine are unchanged.
+
+Text echo protection covers literal values, standard JSON string escaping, HTML escaping, URL quoting
+and full percent-encoding of the configured key's UTF-8 bytes. Plain-text `api_key: value` /
+`api_key=value` labels are handled on a best-effort basis (single-line quoted values or unquoted values
+up to whitespace or punctuation delimiters). This is not a parser for arbitrary HTML/XML or a detector
+for unknown secrets in free text. Base64, hashes, partial keys, split strings, arbitrary transformations,
+and credentials in unrelated custom authentication headers are outside this protection.
+
+The bundled response contract exposes `user.api_key`; password fields are user-write inputs and there
+is no `access_token` response contract. This filter therefore does not guess that every password/token
+field is a returned credential. In particular, attachment `upload.token` remains available because it is
+required when attaching an uploaded file to an issue. Treat that functional token as sensitive data too.
+
+Raw attachment downloads and inline images keep their original bytes. Downloaded files and displayed
+images may themselves contain secrets, including API keys: their contents are deliberately outside text
+response sanitization. Review attachments before requesting an inline image or sharing a downloaded file.
+The insecure-content markers on request results are separate trust annotations, not credential redaction.
+
 ## Getting Your Redmine API Key
 
 1. Log in to your Redmine instance

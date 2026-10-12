@@ -1,9 +1,11 @@
-import os, yaml, pathlib, json, uuid
+import os, yaml, pathlib, json, uuid, logging
 from urllib.parse import urljoin
 
 import httpx
 from mcp.server.mcpserver import MCPServer, Image
 from mcp.server.mcpserver.utilities.logging import get_logger
+
+from mcp_redmine.redaction import redact, redact_text, response_api_keys, CredentialFilter
 
 ### Constants ###
 
@@ -26,6 +28,20 @@ if custom_headers := os.environ.get('REDMINE_HEADERS', ''):
         if ':' in header:
             key, value = header.split(':', 1)
             REDMINE_HEADERS[key.strip()] = value.strip()
+
+def response_secrets():
+    # A custom API-key header can override the default authentication header.
+    return [REDMINE_API_KEY, *[value for key, value in REDMINE_HEADERS.items()
+                              if key.lower() == 'x-redmine-api-key']]
+
+
+_credential_filter = CredentialFilter(response_secrets)
+for _logger_name in (
+    __name__, 'httpx', 'httpcore.connection', 'httpcore.http11', 'httpcore.http2',
+    'httpcore.proxy', 'httpcore.socks', 'mcp.server.mcpserver.server',
+    'mcp.server.lowlevel.server',
+):
+    logging.getLogger(_logger_name).addFilter(_credential_filter)
 
 # Allowed directories for upload/download (secure by default - disabled if not set)
 REDMINE_ALLOWED_DIRECTORIES = [
@@ -124,10 +140,12 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
         
 def format_response(obj):
     """Format response as YAML or JSON based on REDMINE_RESPONSE_FORMAT env var."""
+    secrets = [*response_secrets(), *response_api_keys(obj)]
+    obj = redact(obj, secrets)
     if REDMINE_RESPONSE_FORMAT == 'json':
-        return json.dumps(obj, ensure_ascii=False, indent=2, default=str)
+        return redact_text(json.dumps(obj, ensure_ascii=False, indent=2, default=str), secrets, labelled=False)
     # YAML: Allow direct Unicode output, prevent line wrapping for long lines, and avoid automatic key sorting.
-    return yaml.safe_dump(obj, allow_unicode=True, sort_keys=False, width=4096)
+    return redact_text(yaml.safe_dump(obj, allow_unicode=True, sort_keys=False, width=4096), secrets, labelled=False)
 
 
 def wrap_insecure_content(content: str) -> str:
