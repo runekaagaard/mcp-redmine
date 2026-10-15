@@ -131,12 +131,33 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
 
         return {"status_code": status_code, "body": body, "error": f"{e.__class__.__name__}: {e}"}
         
+def redact(obj):
+    """Redact credential values from parsed API responses. Redmine returns the requesting
+    user's api_key on several /users endpoints, and tool results end up in model context,
+    transcripts and logs (reported in #50, thanks @nick411077)."""
+    if isinstance(obj, dict):
+        return {k: ("[REDACTED]" if k.lower().replace("-", "_") in ("api_key", "apikey") else redact(v))
+                for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [redact(x) for x in obj]
+    return obj
+
+
+def scrub_key(text: str) -> str:
+    """Remove the configured API key from any outgoing text, wherever it appears."""
+    if REDMINE_API_KEY and isinstance(text, str):
+        return text.replace(REDMINE_API_KEY, "[REDACTED]")
+    return text
+
+
 def format_response(obj):
     """Format response as YAML or JSON based on REDMINE_RESPONSE_FORMAT env var."""
+    obj = redact(obj)
     if REDMINE_RESPONSE_FORMAT == 'json':
-        return json.dumps(obj, ensure_ascii=False, indent=2, default=str)
+        return scrub_key(json.dumps(obj, ensure_ascii=False, indent=2, default=str))
     # YAML: Allow direct Unicode output, prevent line wrapping for long lines, and avoid automatic key sorting.
-    return yaml.safe_dump(obj, allow_unicode=True, sort_keys=False, width=4096)
+    return scrub_key(yaml.safe_dump(obj, allow_unicode=True, sort_keys=False, width=4096))
+
 
 
 def wrap_insecure_content(content: str) -> str:

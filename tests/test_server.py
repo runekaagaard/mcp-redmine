@@ -184,6 +184,35 @@ def test_redmine_download_saves_json_attachment(monkeypatch, tmp_path):
     assert (tmp_path / "out.json").read_bytes() == JSON_BYTES
 
 
+# Credential redaction (#50, thanks @nick411077)
+
+def test_api_key_fields_in_responses_are_redacted():
+    out = server.format_response(
+        {"user": {"login": "admin", "api_key": "sekrit-abc", "mail": "a@b.c"},
+         "memberships": [{"apiKey": "sekrit-too"}]})
+    assert "sekrit-abc" not in out and "sekrit-too" not in out
+    assert out.count("[REDACTED]") == 2
+    assert "admin" in out  # everything else untouched
+
+
+def test_configured_key_is_scrubbed_from_any_text():
+    out = server.format_response({"note": "the key is test-api-key-123, do not tell"})
+    assert "test-api-key-123" not in out
+    assert "[REDACTED]" in out
+
+
+def test_error_strings_are_scrubbed_too():
+    out = server.format_response(
+        {"status_code": 0, "body": None, "error": "boom: header test-api-key-123 rejected"})
+    assert "test-api-key-123" not in out
+
+
+def test_redaction_survives_empty_configured_key(monkeypatch):
+    monkeypatch.setattr(server, "REDMINE_API_KEY", "")
+    out = server.format_response({"user": {"api_key": "sekrit"}})
+    assert "sekrit" not in out  # field redaction does not depend on the env key
+
+
 # Per-connection API key via X-Redmine-API-Key header (#49)
 
 class FakeCtx:
