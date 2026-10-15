@@ -2,7 +2,7 @@ import os, yaml, pathlib, json, uuid
 from urllib.parse import urljoin
 
 import httpx
-from mcp.server.mcpserver import MCPServer, Image
+from mcp.server.mcpserver import MCPServer, Image, Context
 from mcp.server.mcpserver.utilities.logging import get_logger
 
 ### Constants ###
@@ -16,7 +16,7 @@ with open(current_dir / 'redmine_openapi.yml') as f:
 
 # Constants from environment
 REDMINE_URL = os.environ['REDMINE_URL'].rstrip('/') + '/'  # Normalize to always end with /
-REDMINE_API_KEY = os.environ['REDMINE_API_KEY']
+REDMINE_API_KEY = os.environ.get('REDMINE_API_KEY', '')  # optional: HTTP clients can send X-Redmine-API-Key per request
 REDMINE_RESPONSE_FORMAT = os.environ.get('REDMINE_RESPONSE_FORMAT', 'yaml').lower()
 
 # Custom headers (format: "Header1: Value1, Header2: Value2")
@@ -70,13 +70,22 @@ else:
 
 # Core
 def request(path: str, method: str = 'get', data: dict = None, params: dict = None,
-            content_type: str = 'application/json', content: bytes = None, raw: bool = False) -> dict:
+            content_type: str = 'application/json', content: bytes = None, raw: bool = False,
+            ctx: Context = None) -> dict:
     if REDMINE_READ_ONLY and method.lower() != 'get':
         return {"status_code": 0, "body": None,
                 "error": f"REDMINE_READ_ONLY is enabled: refusing {method.upper()} request"}
 
+    # On HTTP transports a client can send its own key per request, so a shared server acts
+    # as the calling user instead of one service account (#49). Env key is the fallback.
+    headers = {} if ctx is None or ctx.headers is None else ctx.headers  # no headers on stdio
+    key = headers.get('x-redmine-api-key') or REDMINE_API_KEY
+    if not key:
+        return {"status_code": 0, "body": None,
+                "error": "No API key: set REDMINE_API_KEY or send an X-Redmine-API-Key request header"}
+
     headers = {
-        'X-Redmine-API-Key': REDMINE_API_KEY,
+        'X-Redmine-API-Key': key,
         'Content-Type': content_type,
         **REDMINE_HEADERS
     }
@@ -181,8 +190,10 @@ Returns:
 
 {}""".format(REDMINE_REQUEST_INSTRUCTIONS).strip())
     
-def redmine_request(path: str, method: str = 'get', data: dict = None, params: dict = None) -> str:
-    return wrap_insecure_content(format_response(request(path, method=method, data=data, params=params)))
+def redmine_request(path: str, method: str = 'get', data: dict = None, params: dict = None,
+                    ctx: Context = None) -> str:
+    return wrap_insecure_content(format_response(
+        request(path, method=method, data=data, params=params, ctx=ctx)))
 
 @mcp.tool()
 def redmine_paths_list() -> str:
@@ -214,7 +225,7 @@ def redmine_paths_info(path_templates: list) -> str:
     return format_response(info)
 
 @mcp.tool()
-def redmine_upload(file_path: str, description: str = None) -> str:
+def redmine_upload(file_path: str, description: str = None, ctx: Context = None) -> str:
     """
     Upload a file to Redmine and get a token for attachment
 
@@ -239,13 +250,15 @@ def redmine_upload(file_path: str, description: str = None) -> str:
             file_content = f.read()
 
         result = request(path='uploads.json', method='post', params=params,
-                         content_type='application/octet-stream', content=file_content)
+                         content_type='application/octet-stream', content=file_content,
+                         ctx=ctx)
         return format_response(result)
     except Exception as e:
         return format_response({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
 
 @mcp.tool()
-def redmine_download(attachment_id: int, save_path: str, filename: str | None = None) -> str:
+def redmine_download(attachment_id: int, save_path: str, filename: str | None = None,
+                     ctx: Context = None) -> str:
     """
     Download an attachment from Redmine and save it to a local file
 
@@ -267,14 +280,15 @@ def redmine_download(attachment_id: int, save_path: str, filename: str | None = 
 
     try:
         if not filename:
-            attachment_response = request(f"attachments/{attachment_id}.json", "get")
+            attachment_response = request(f"attachments/{attachment_id}.json", "get",
+                                          ctx=ctx)
             if attachment_response["status_code"] != 200:
                 return format_response(attachment_response)
 
             filename = attachment_response["body"]["attachment"]["filename"]
 
         response = request(f"attachments/download/{attachment_id}/{filename}", "get",
-                           content_type="application/octet-stream", raw=True)
+                           content_type="application/octet-stream", raw=True, ctx=ctx)
         if response["status_code"] != 200 or not response["body"]:
             return format_response(response)
 
@@ -292,7 +306,7 @@ def redmine_download(attachment_id: int, save_path: str, filename: str | None = 
 ATTACHMENT_IMAGE_MAX_BYTES = 5 * 1024 * 1024
 
 @mcp.tool()
-def redmine_attachment_image(attachment_id: int) -> Image | str:
+def redmine_attachment_image(attachment_id: int, ctx: Context = None) -> Image | str:
     """
     Fetch an image attachment (e.g. an inline screenshot like !screenshot.png!) and return it as viewable
     image content. Use redmine_request on '/issues/{id}.json' with params {'include': 'attachments'} to find
@@ -305,7 +319,8 @@ def redmine_attachment_image(attachment_id: int) -> Image | str:
         Image content on success, or a YAML error string on failure
     """
     try:
-        attachment_response = request(f"attachments/{attachment_id}.json", "get")
+        attachment_response = request(f"attachments/{attachment_id}.json", "get",
+                                      ctx=ctx)
         if attachment_response["status_code"] != 200:
             return format_response(attachment_response)
 
@@ -323,7 +338,7 @@ def redmine_attachment_image(attachment_id: int) -> Image | str:
                          "Use redmine_download to save it to disk instead."})
 
         response = request(f"attachments/download/{attachment_id}/{attachment['filename']}", "get",
-                           content_type="application/octet-stream", raw=True)
+                           content_type="application/octet-stream", raw=True, ctx=ctx)
         if response["status_code"] != 200 or not response["body"]:
             return format_response(response)
 

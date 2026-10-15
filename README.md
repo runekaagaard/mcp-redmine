@@ -124,12 +124,26 @@ mcp-redmine --transport streamable-http --host 0.0.0.0 --port 8000
 mcp-redmine --transport sse --host 0.0.0.0 --port 8000
 ```
 
+### Multi-user HTTP deployments
+
+When running as a shared HTTP server, each client can send its own Redmine API key in an
+`X-Redmine-API-Key` request header, so actions are attributed to the calling user instead
+of one shared service account. The header takes precedence; `REDMINE_API_KEY` remains the
+fallback (and the only option on stdio). Example with Claude Code:
+
+```bash
+claude mcp add --transport http --header "X-Redmine-API-Key: <your-personal-key>" \
+  redmine http://shared-server:8000/mcp
+```
+
+Only do this over trusted networks or TLS - the header carries a credential.
+
 ## Environment Variables
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `REDMINE_URL` | Yes | - | URL of your Redmine instance. Subpaths are supported (e.g., `http://localhost/redmine/`) |
-| `REDMINE_API_KEY` | Yes | - | Your Redmine API key (see below for how to get it) |
+| `REDMINE_API_KEY` | Yes* | - | Your Redmine API key (see below for how to get it). *Optional when every client sends `X-Redmine-API-Key` (see Multi-user below) |
 | `REDMINE_REQUEST_INSTRUCTIONS` | No | - | Path to a file containing additional instructions for the redmine_request tool. I've found it works great to have the LLM generate that file after a session. ([example1](INSTRUCTIONS_EXAMPLE1.md) [example2](INSTRUCTIONS_EXAMPLE2.md)) |
 | `REDMINE_HEADERS` | No | (empty) | Custom HTTP headers to include in all requests. Format: `"Header1: Value1, Header2: Value2"`. Useful for proxies that require additional authentication (e.g., `X-Redmine-Username`) |
 | `REDMINE_RESPONSE_FORMAT` | No | `yaml` | Response format: `yaml` or `json`. Controls how API responses are formatted |
