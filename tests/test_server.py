@@ -182,3 +182,33 @@ def test_redmine_download_saves_json_attachment(monkeypatch, tmp_path):
     result = server.redmine_download(1, str(tmp_path / "out.json"))
     assert "saved_to" in result and "error: ''" in result
     assert (tmp_path / "out.json").read_bytes() == JSON_BYTES
+
+
+# Per-connection API key via X-Redmine-API-Key header (#49)
+
+class FakeCtx:
+    def __init__(self, headers):
+        self.headers = headers
+
+
+def test_header_key_wins_over_env(capture_requests):
+    key = server.api_key_for(FakeCtx({"x-redmine-api-key": "per-user-key"}))
+    server.request("issues.json", api_key=key)
+    assert capture_requests[0]["headers"]["X-Redmine-API-Key"] == "per-user-key"
+
+
+def test_header_lookup_is_case_insensitive():
+    assert server.api_key_for(FakeCtx({"X-Redmine-Api-Key": "k"})) == "k"
+
+
+def test_env_key_is_the_fallback(capture_requests):
+    for ctx in [None, FakeCtx(None), FakeCtx({})]:
+        assert server.api_key_for(ctx) == "test-api-key-123"
+
+
+def test_no_key_at_all_is_a_clear_error(capture_requests, monkeypatch):
+    monkeypatch.setattr(server, "REDMINE_API_KEY", "")
+    result = server.request("issues.json", api_key=server.api_key_for(None))
+    assert result["status_code"] == 0
+    assert "X-Redmine-API-Key" in result["error"]
+    assert capture_requests == []  # nothing sent without a key
