@@ -211,3 +211,29 @@ def test_redaction_survives_empty_configured_key(monkeypatch):
     monkeypatch.setattr(server, "REDMINE_API_KEY", "")
     out = server.format_response({"user": {"api_key": "sekrit"}})
     assert "sekrit" not in out  # field redaction does not depend on the env key
+
+
+# Per-connection API key via X-Redmine-API-Key header (#49)
+
+class FakeCtx:
+    def __init__(self, headers):
+        self.headers = headers
+
+
+def test_header_key_wins_over_env(capture_requests):
+    server.request("issues.json", ctx=FakeCtx({"x-redmine-api-key": "per-user-key"}))
+    assert capture_requests[0]["headers"]["X-Redmine-API-Key"] == "per-user-key"
+
+
+def test_env_key_is_the_fallback(capture_requests):
+    for ctx in [None, FakeCtx(None), FakeCtx({})]:
+        server.request("issues.json", ctx=ctx)
+    assert all(c["headers"]["X-Redmine-API-Key"] == "test-api-key-123" for c in capture_requests)
+
+
+def test_no_key_at_all_is_a_clear_error(capture_requests, monkeypatch):
+    monkeypatch.setattr(server, "REDMINE_API_KEY", "")
+    result = server.request("issues.json", ctx=None)
+    assert result["status_code"] == 0
+    assert "X-Redmine-API-Key" in result["error"]
+    assert capture_requests == []  # nothing sent without a key
