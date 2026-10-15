@@ -7,7 +7,7 @@ from mcp.server.mcpserver.utilities.logging import get_logger
 
 ### Constants ###
 
-VERSION = "2026.10.15.181904"
+VERSION = "2026.10.15.202618"
 
 # Load OpenAPI spec
 current_dir = pathlib.Path(__file__).parent
