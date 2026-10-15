@@ -1,4 +1,4 @@
-import os, yaml, pathlib, json, uuid, logging
+import os, yaml, pathlib, json, uuid
 from urllib.parse import urljoin
 
 import httpx
@@ -149,24 +149,6 @@ def format_response(obj):
     # YAML: Allow direct Unicode output, prevent line wrapping for long lines, and avoid automatic key sorting.
     return scrub_key(yaml.safe_dump(obj, allow_unicode=True, sort_keys=False, width=4096))
 
-
-# Scrub the key from every log record, whichever logger or handler it travels through.
-_previous_record_factory = logging.getLogRecordFactory()
-
-
-def _redacting_record_factory(*args, **kwargs):
-    record = _previous_record_factory(*args, **kwargs)
-    if REDMINE_API_KEY:
-        if isinstance(record.msg, str):
-            record.msg = record.msg.replace(REDMINE_API_KEY, "[REDACTED]")
-        if record.args:
-            record.args = tuple(
-                a.replace(REDMINE_API_KEY, "[REDACTED]") if isinstance(a, str) else a
-                for a in record.args)
-    return record
-
-
-logging.setLogRecordFactory(_redacting_record_factory)
 
 
 def wrap_insecure_content(content: str) -> str:

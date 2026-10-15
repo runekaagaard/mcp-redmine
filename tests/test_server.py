@@ -207,14 +207,6 @@ def test_error_strings_are_scrubbed_too():
     assert "test-api-key-123" not in out
 
 
-def test_log_records_are_scrubbed(caplog):
-    import logging
-    with caplog.at_level(logging.INFO):
-        logging.getLogger("anything.at.all").info("sending with key %s", "test-api-key-123")
-    assert "test-api-key-123" not in caplog.text
-    assert "[REDACTED]" in caplog.text
-
-
 def test_redaction_survives_empty_configured_key(monkeypatch):
     monkeypatch.setattr(server, "REDMINE_API_KEY", "")
     out = server.format_response({"user": {"api_key": "sekrit"}})
