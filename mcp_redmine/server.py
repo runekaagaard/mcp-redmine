@@ -1,4 +1,4 @@
-import os, yaml, pathlib, json, uuid
+import os, yaml, pathlib, json, uuid, logging
 from urllib.parse import urljoin
 
 import httpx
@@ -122,12 +122,51 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
 
         return {"status_code": status_code, "body": body, "error": f"{e.__class__.__name__}: {e}"}
         
+def redact(obj):
+    """Redact credential values from parsed API responses. Redmine returns the requesting
+    user's api_key on several /users endpoints, and tool results end up in model context,
+    transcripts and logs (reported in #50, thanks @nick411077)."""
+    if isinstance(obj, dict):
+        return {k: ("[REDACTED]" if k.lower().replace("-", "_") in ("api_key", "apikey") else redact(v))
+                for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [redact(x) for x in obj]
+    return obj
+
+
+def scrub_key(text: str) -> str:
+    """Remove the configured API key from any outgoing text, wherever it appears."""
+    if REDMINE_API_KEY and isinstance(text, str):
+        return text.replace(REDMINE_API_KEY, "[REDACTED]")
+    return text
+
+
 def format_response(obj):
     """Format response as YAML or JSON based on REDMINE_RESPONSE_FORMAT env var."""
+    obj = redact(obj)
     if REDMINE_RESPONSE_FORMAT == 'json':
-        return json.dumps(obj, ensure_ascii=False, indent=2, default=str)
+        return scrub_key(json.dumps(obj, ensure_ascii=False, indent=2, default=str))
     # YAML: Allow direct Unicode output, prevent line wrapping for long lines, and avoid automatic key sorting.
-    return yaml.safe_dump(obj, allow_unicode=True, sort_keys=False, width=4096)
+    return scrub_key(yaml.safe_dump(obj, allow_unicode=True, sort_keys=False, width=4096))
+
+
+# Scrub the key from every log record, whichever logger or handler it travels through.
+_previous_record_factory = logging.getLogRecordFactory()
+
+
+def _redacting_record_factory(*args, **kwargs):
+    record = _previous_record_factory(*args, **kwargs)
+    if REDMINE_API_KEY:
+        if isinstance(record.msg, str):
+            record.msg = record.msg.replace(REDMINE_API_KEY, "[REDACTED]")
+        if record.args:
+            record.args = tuple(
+                a.replace(REDMINE_API_KEY, "[REDACTED]") if isinstance(a, str) else a
+                for a in record.args)
+    return record
+
+
+logging.setLogRecordFactory(_redacting_record_factory)
 
 
 def wrap_insecure_content(content: str) -> str:
