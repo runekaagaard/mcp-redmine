@@ -192,23 +192,19 @@ class FakeCtx:
 
 
 def test_header_key_wins_over_env(capture_requests):
-    key = server.api_key_for(FakeCtx({"x-redmine-api-key": "per-user-key"}))
-    server.request("issues.json", api_key=key)
+    server.request("issues.json", ctx=FakeCtx({"X-Redmine-Api-Key": "per-user-key"}))
     assert capture_requests[0]["headers"]["X-Redmine-API-Key"] == "per-user-key"
-
-
-def test_header_lookup_is_case_insensitive():
-    assert server.api_key_for(FakeCtx({"X-Redmine-Api-Key": "k"})) == "k"
 
 
 def test_env_key_is_the_fallback(capture_requests):
     for ctx in [None, FakeCtx(None), FakeCtx({})]:
-        assert server.api_key_for(ctx) == "test-api-key-123"
+        server.request("issues.json", ctx=ctx)
+    assert all(c["headers"]["X-Redmine-API-Key"] == "test-api-key-123" for c in capture_requests)
 
 
 def test_no_key_at_all_is_a_clear_error(capture_requests, monkeypatch):
     monkeypatch.setattr(server, "REDMINE_API_KEY", "")
-    result = server.request("issues.json", api_key=server.api_key_for(None))
+    result = server.request("issues.json", ctx=None)
     assert result["status_code"] == 0
     assert "X-Redmine-API-Key" in result["error"]
     assert capture_requests == []  # nothing sent without a key

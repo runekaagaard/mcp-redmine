@@ -69,26 +69,19 @@ else:
 
 
 # Core
-def api_key_for(ctx: Context = None) -> str:
-    """Per-connection key from the X-Redmine-API-Key request header (HTTP transports),
-    falling back to the REDMINE_API_KEY environment variable. Lets one shared HTTP server
-    act as each calling user instead of a single service account (#49)."""
-    headers = ctx.headers if ctx is not None else None
-    if headers:
-        for name, value in headers.items():
-            if name.lower() == 'x-redmine-api-key':
-                return value
-    return REDMINE_API_KEY
-
-
 def request(path: str, method: str = 'get', data: dict = None, params: dict = None,
             content_type: str = 'application/json', content: bytes = None, raw: bool = False,
-            api_key: str = None) -> dict:
+            ctx: Context = None) -> dict:
     if REDMINE_READ_ONLY and method.lower() != 'get':
         return {"status_code": 0, "body": None,
                 "error": f"REDMINE_READ_ONLY is enabled: refusing {method.upper()} request"}
 
-    key = api_key if api_key is not None else REDMINE_API_KEY
+    # On HTTP transports a client can send its own key per request, so a shared server acts
+    # as the calling user instead of one service account (#49). Env key is the fallback.
+    key = REDMINE_API_KEY
+    for name, value in (ctx.headers or {}).items() if ctx is not None else []:
+        if name.lower() == 'x-redmine-api-key':
+            key = value
     if not key:
         return {"status_code": 0, "body": None,
                 "error": "No API key: set REDMINE_API_KEY or send an X-Redmine-API-Key request header"}
@@ -202,7 +195,7 @@ Returns:
 def redmine_request(path: str, method: str = 'get', data: dict = None, params: dict = None,
                     ctx: Context = None) -> str:
     return wrap_insecure_content(format_response(
-        request(path, method=method, data=data, params=params, api_key=api_key_for(ctx))))
+        request(path, method=method, data=data, params=params, ctx=ctx)))
 
 @mcp.tool()
 def redmine_paths_list() -> str:
@@ -260,7 +253,7 @@ def redmine_upload(file_path: str, description: str = None, ctx: Context = None)
 
         result = request(path='uploads.json', method='post', params=params,
                          content_type='application/octet-stream', content=file_content,
-                         api_key=api_key_for(ctx))
+                         ctx=ctx)
         return format_response(result)
     except Exception as e:
         return format_response({"status_code": 0, "body": None, "error": f"{e.__class__.__name__}: {e}"})
@@ -290,14 +283,14 @@ def redmine_download(attachment_id: int, save_path: str, filename: str | None = 
     try:
         if not filename:
             attachment_response = request(f"attachments/{attachment_id}.json", "get",
-                                          api_key=api_key_for(ctx))
+                                          ctx=ctx)
             if attachment_response["status_code"] != 200:
                 return format_response(attachment_response)
 
             filename = attachment_response["body"]["attachment"]["filename"]
 
         response = request(f"attachments/download/{attachment_id}/{filename}", "get",
-                           content_type="application/octet-stream", raw=True, api_key=api_key_for(ctx))
+                           content_type="application/octet-stream", raw=True, ctx=ctx)
         if response["status_code"] != 200 or not response["body"]:
             return format_response(response)
 
@@ -329,7 +322,7 @@ def redmine_attachment_image(attachment_id: int, ctx: Context = None) -> Image |
     """
     try:
         attachment_response = request(f"attachments/{attachment_id}.json", "get",
-                                      api_key=api_key_for(ctx))
+                                      ctx=ctx)
         if attachment_response["status_code"] != 200:
             return format_response(attachment_response)
 
@@ -347,7 +340,7 @@ def redmine_attachment_image(attachment_id: int, ctx: Context = None) -> Image |
                          "Use redmine_download to save it to disk instead."})
 
         response = request(f"attachments/download/{attachment_id}/{attachment['filename']}", "get",
-                           content_type="application/octet-stream", raw=True, api_key=api_key_for(ctx))
+                           content_type="application/octet-stream", raw=True, ctx=ctx)
         if response["status_code"] != 200 or not response["body"]:
             return format_response(response)
 
