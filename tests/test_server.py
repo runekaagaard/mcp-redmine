@@ -192,7 +192,7 @@ class FakeCtx:
 
 
 def test_header_key_wins_over_env(capture_requests):
-    server.request("issues.json", ctx=FakeCtx({"X-Redmine-Api-Key": "per-user-key"}))
+    server.request("issues.json", ctx=FakeCtx({"x-redmine-api-key": "per-user-key"}))
     assert capture_requests[0]["headers"]["X-Redmine-API-Key"] == "per-user-key"
 
 

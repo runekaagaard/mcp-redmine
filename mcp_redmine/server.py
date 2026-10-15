@@ -79,9 +79,8 @@ def request(path: str, method: str = 'get', data: dict = None, params: dict = No
     # On HTTP transports a client can send its own key per request, so a shared server acts
     # as the calling user instead of one service account (#49). Env key is the fallback.
     key = REDMINE_API_KEY
-    for name, value in (ctx.headers or {}).items() if ctx is not None else []:
-        if name.lower() == 'x-redmine-api-key':
-            key = value
+    if ctx is not None and ctx.headers:
+        key = ctx.headers.get('x-redmine-api-key') or key
     if not key:
         return {"status_code": 0, "body": None,
                 "error": "No API key: set REDMINE_API_KEY or send an X-Redmine-API-Key request header"}
