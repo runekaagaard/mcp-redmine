@@ -371,6 +371,8 @@ def redmine_attachment_image(attachment_id: int, ctx: Context = None) -> Image |
 # extras, so a model that writes body= instead of data= would send an empty request and
 # get a 204 back as if it worked (#52). Forbidding extras also makes the published schema
 # say additionalProperties: false, so validating clients reject the typo too.
+# The SDK has no option for this, hence the private attributes. mcp is pinned to an exact
+# version, so an SDK rename fails at import and gets caught by the tests before a release.
 for _tool in mcp._tool_manager.list_tools():
     _tool.fn_metadata.arg_model.model_config["extra"] = "forbid"
     _tool.fn_metadata.arg_model.model_rebuild(force=True)
