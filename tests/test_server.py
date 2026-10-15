@@ -237,3 +237,39 @@ def test_no_key_at_all_is_a_clear_error(capture_requests, monkeypatch):
     assert result["status_code"] == 0
     assert "X-Redmine-API-Key" in result["error"]
     assert capture_requests == []  # nothing sent without a key
+
+
+# Unknown tool arguments are rejected instead of silently dropped (#52)
+
+def _call(tool, args):
+    import anyio
+    from mcp.client import Client
+
+    async def go():
+        async with Client(server.mcp) as client:
+            return await client.call_tool(tool, args)
+    return anyio.run(go)
+
+
+def test_misspelled_argument_is_rejected(capture_requests):
+    result = _call("redmine_request", {"path": "/issues/1.json", "method": "put", "body": {"issue": {}}})
+    assert result.is_error
+    assert "body" in result.content[0].text
+    assert capture_requests == []  # nothing was sent
+
+
+def test_schema_forbids_additional_properties():
+    import anyio
+    from mcp.client import Client
+
+    async def go():
+        async with Client(server.mcp) as client:
+            return {t.name: t.input_schema.get("additionalProperties") for t in (await client.list_tools()).tools}
+    assert all(v is False for v in anyio.run(go).values())
+
+
+def test_known_arguments_still_work(capture_requests):
+    result = _call("redmine_request", {"path": "/checklists/7.json", "method": "put",
+                                       "data": {"checklist": {"is_done": 1}}})
+    assert not result.is_error
+    assert capture_requests[0]["json"] == {"checklist": {"is_done": 1}}
